@@ -56,11 +56,32 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
+  const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
+  const isOnboarding = request.nextUrl.pathname.startsWith('/onboarding')
+  const isLogin = request.nextUrl.pathname.startsWith('/login')
+  const isRegister = request.nextUrl.pathname.startsWith('/register')
+
+  // Not logged in — protect dashboard and onboarding
+  if (!user && (isDashboard || isOnboarding)) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Logged in — check onboarding
+  if (user && isDashboard) {
+    const { data: company } = await supabase
+      .from('companies')
+      .select('onboarding_completed')
+      .eq('owner_id', user.id)
+      .single()
+
+    if (company && !company.onboarding_completed) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
     }
+  }
+
+  // Logged in — redirect away from login/register
+  if (user && (isLogin || isRegister)) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return response

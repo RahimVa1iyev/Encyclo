@@ -1,47 +1,71 @@
+export interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  created_at: string;
+}
+
+export interface CompanyTranslation {
+  id: string;
+  company_id: string;
+  locale: string;
+  name: string;
+  description?: string;
+  meta_title?: string;
+  meta_description?: string;
+}
+
 export interface Company {
   id: string;
-  name: string;
   slug: string;
   logo_url?: string;
   website?: string;
-  description?: string;
+  category_id?: string;
+  status: 'draft' | 'active' | 'suspended';
+  owner_id: string;
+  onboarding_completed: boolean;
   created_at: string;
+  translations?: CompanyTranslation[];
+  category?: Category;
+}
+
+export interface ProductTranslation {
+  id: string;
+  product_id: string;
+  locale: string;
+  name: string;
+  description?: string;
+  features?: Record<string, string>;
+  meta_title?: string;
+  meta_description?: string;
 }
 
 export interface Product {
   id: string;
-  name: string;
-  slug: string;
   company_id: string;
-  category_id: string;
-  description?: string;
-  price?: number;
-  image_url?: string;
-  created_at: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
   slug: string;
-  description?: string;
+  images: string[];
+  type: 'product' | 'service';
+  status: 'draft' | 'active' | 'suspended';
   created_at: string;
+  translations?: ProductTranslation[];
+  company?: Company;
 }
 
 export interface ForumPost {
   id: string;
-  title: string;
-  content: string;
+  product_id: string;
   user_id: string;
-  category_id?: string;
+  content: string;
   created_at: string;
 }
 
 export interface Subscription {
   id: string;
-  user_id: string;
-  plan_id: string;
-  status: 'active' | 'canceled' | 'past_due' | 'unpaid';
-  current_period_end: string;
+  company_id: string;
+  plan: 'basic' | 'pro' | 'enterprise';
+  locales: string[];
+  status: 'active' | 'cancelled' | 'past_due';
+  expires_at?: string;
   created_at: string;
 }
