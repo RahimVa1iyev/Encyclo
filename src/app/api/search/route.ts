@@ -11,21 +11,20 @@ export async function GET(request: NextRequest) {
 
   const supabase = createServerSupabaseClient()
 
-  // Search companies
-  const { data: companies } = await supabase
-    .from('company_translations')
-    .select('name, company_id, companies(slug, logo_url, status)')
-    .eq('locale', 'az')
-    .ilike('name', `%${query}%`)
-    .limit(5)
-
-  // Search products
-  const { data: products } = await supabase
-    .from('product_translations')
-    .select('name, product_id, products(slug, status, images, company:companies(slug, logo_url, translations:company_translations(name)))')
-    .eq('locale', 'az')
-    .ilike('name', `%${query}%`)
-    .limit(5)
+  const [{ data: companies }, { data: products }] = await Promise.all([
+    supabase
+      .from('company_translations')
+      .select('name, company_id, companies(slug, logo_url, status)')
+      .eq('locale', 'az')
+      .ilike('name', `%${query}%`)
+      .limit(5),
+    supabase
+      .from('product_translations')
+      .select('name, product_id, products(slug, status, images, company:companies(slug, logo_url, translations:company_translations(name)))')
+      .eq('locale', 'az')
+      .ilike('name', `%${query}%`)
+      .limit(5)
+  ])
 
   const filteredCompanies = (companies || []).filter(
     (c: any) => (c.companies as any)?.status === 'active'

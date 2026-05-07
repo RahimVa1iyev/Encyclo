@@ -29,13 +29,21 @@ export interface Company {
   category?: Category;
 }
 
+export interface ProductFeatures {
+  keywords?: string[];
+  price?: string | number;
+  currency?: string;
+  price_type?: string;
+  category_id?: string;
+}
+
 export interface ProductTranslation {
   id: string;
   product_id: string;
   locale: string;
   name: string;
   description?: string;
-  features?: Record<string, string>;
+  features?: ProductFeatures;
   meta_title?: string;
   meta_description?: string;
 }
@@ -47,6 +55,7 @@ export interface Product {
   images: string[];
   type: 'product' | 'service';
   status: 'draft' | 'active' | 'suspended';
+  views?: number;
   created_at: string;
   translations?: ProductTranslation[];
   company?: Company;
@@ -57,6 +66,8 @@ export interface ForumPost {
   product_id: string;
   user_id: string;
   content: string;
+  is_faq?: boolean;
+  question?: string;
   created_at: string;
 }
 

@@ -4,16 +4,21 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Eye, 
-  Package, 
-  MessageSquare, 
+import {
+  Eye,
+  Package,
+  MessageSquare,
   TrendingUp,
   ExternalLink,
-  Loader2,
   BarChart3
 } from "lucide-react";
 import Link from "next/link";
+import type { Product, ProductTranslation } from "@/types";
+
+type ProductWithStats = Product & {
+  translations: ProductTranslation[];
+  forum_posts: { count: number }[];
+};
 
 export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -23,7 +28,7 @@ export default function ReportsPage() {
     activeProducts: 0,
     totalForumPosts: 0,
   });
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductWithStats[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
@@ -43,15 +48,15 @@ export default function ReportsPage() {
       const { data: productsData } = await supabase
         .from('products')
         .select(`
-          id, slug, status, views, type, created_at,
-          translations:product_translations(name, locale),
+          id, company_id, slug, status, views, type, images, created_at,
+          translations:product_translations(id, product_id, name, locale),
           forum_posts(count)
         `)
         .eq('company_id', company.id)
         .order('views', { ascending: false });
 
       if (productsData) {
-        setProducts(productsData);
+        setProducts(productsData as ProductWithStats[]);
         setStats({
           totalViews: productsData.reduce((sum, p) => sum + (p.views || 0), 0),
           totalProducts: productsData.length,
@@ -67,8 +72,34 @@ export default function ReportsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+      <div className="max-w-6xl mx-auto space-y-8 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-8 w-40 bg-gray-200 rounded-xl" />
+          <div className="h-4 w-56 bg-gray-100 rounded-xl" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+              <div className="h-9 w-9 bg-gray-100 rounded-xl" />
+              <div className="h-7 w-20 bg-gray-200 rounded-lg" />
+              <div className="h-3 w-28 bg-gray-100 rounded-lg" />
+            </div>
+          ))}
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+          <div className="h-5 w-40 bg-gray-200 rounded-lg" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 py-3 border-b border-gray-50">
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-40 bg-gray-200 rounded-lg" />
+                <div className="h-3 w-20 bg-gray-100 rounded-lg" />
+              </div>
+              <div className="h-6 w-16 bg-gray-100 rounded-lg" />
+              <div className="h-6 w-12 bg-gray-100 rounded-lg" />
+              <div className="h-6 w-12 bg-gray-100 rounded-lg" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -83,33 +114,33 @@ export default function ReportsPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { 
-            label: "Ümumi Baxış", 
-            value: stats.totalViews.toLocaleString(), 
-            icon: Eye, 
+          {
+            label: "Ümumi Baxış",
+            value: stats.totalViews.toLocaleString(),
+            icon: Eye,
             color: "text-blue-600",
             bg: "bg-blue-50"
           },
-          { 
-            label: "Aktiv Məhsullar", 
-            value: `${stats.activeProducts}/${stats.totalProducts}`, 
-            icon: Package, 
+          {
+            label: "Aktiv Məhsullar",
+            value: `${stats.activeProducts}/${stats.totalProducts}`,
+            icon: Package,
             color: "text-green-600",
             bg: "bg-green-50"
           },
-          { 
-            label: "Forum Şərhlər", 
-            value: stats.totalForumPosts.toLocaleString(), 
-            icon: MessageSquare, 
+          {
+            label: "Forum Şərhlər",
+            value: stats.totalForumPosts.toLocaleString(),
+            icon: MessageSquare,
             color: "text-purple-600",
             bg: "bg-purple-50"
           },
-          { 
-            label: "Ort. Baxış/Məhsul", 
-            value: stats.totalProducts > 0 
-              ? Math.round(stats.totalViews / stats.totalProducts).toLocaleString() 
-              : "0", 
-            icon: TrendingUp, 
+          {
+            label: "Ort. Baxış/Məhsul",
+            value: stats.totalProducts > 0
+              ? Math.round(stats.totalViews / stats.totalProducts).toLocaleString()
+              : "0",
+            icon: TrendingUp,
             color: "text-orange-600",
             bg: "bg-orange-50"
           },
@@ -118,13 +149,13 @@ export default function ReportsPage() {
           return (
             <Card key={stat.label} className="rounded-2xl border-gray-100 shadow-sm">
               <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`h-9 w-9 ${stat.bg} rounded-xl flex items-center justify-center`}>
-                    <Icon className={`h-5 w-5 ${stat.color}`} />
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                  <div className={`h-8 w-8 ${stat.bg} rounded-lg flex items-center justify-center`}>
+                    <Icon className={`h-4 w-4 ${stat.color}`} />
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
               </CardContent>
             </Card>
           );
@@ -169,12 +200,12 @@ export default function ReportsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {products.map((product) => {
-                    const name = product.translations?.find((t: any) => t.locale === 'az')?.name 
-                      || product.translations?.[0]?.name 
+                    const name = product.translations?.find((t: any) => t.locale === 'az')?.name
+                      || product.translations?.[0]?.name
                       || product.slug;
                     const forumCount = product.forum_posts?.[0]?.count || 0;
-                    const viewsPercent = stats.totalViews > 0 
-                      ? Math.round(((product.views || 0) / stats.totalViews) * 100) 
+                    const viewsPercent = stats.totalViews > 0
+                      ? Math.round(((product.views || 0) / stats.totalViews) * 100)
                       : 0;
 
                     return (
@@ -189,11 +220,11 @@ export default function ReportsPage() {
                         </td>
                         <td className="py-4 text-center">
                           <Badge className={
-                            product.status === 'active' 
-                              ? 'bg-green-100 text-green-700 border-none' 
+                            product.status === 'active'
+                              ? 'bg-green-100 text-green-700 border-none'
                               : product.status === 'draft'
-                              ? 'bg-gray-100 text-gray-600 border-none'
-                              : 'bg-red-100 text-red-600 border-none'
+                                ? 'bg-gray-100 text-gray-600 border-none'
+                                : 'bg-red-100 text-red-600 border-none'
                           }>
                             {product.status === 'active' ? 'Aktiv' : product.status === 'draft' ? 'Qaralama' : 'Dayandırılıb'}
                           </Badge>
@@ -202,7 +233,7 @@ export default function ReportsPage() {
                           <div className="space-y-1">
                             <p className="font-bold text-gray-900">{(product.views || 0).toLocaleString()}</p>
                             <div className="w-full bg-gray-100 rounded-full h-1.5 mx-auto max-w-[80px]">
-                              <div 
+                              <div
                                 className="bg-indigo-500 h-1.5 rounded-full transition-all"
                                 style={{ width: `${viewsPercent}%` }}
                               />

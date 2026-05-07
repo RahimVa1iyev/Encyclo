@@ -6,6 +6,10 @@ import { Badge } from '@/components/ui/badge'
 export const metadata = {
   title: 'Bütün Məhsullar — Encyclo',
   description: 'Azərbaycanın texnologiya məhsulları və xidmətləri',
+  openGraph: {
+    title: 'Bütün Məhsullar — Encyclo',
+    description: 'Azərbaycanın texnologiya məhsulları və xidmətləri',
+  },
 }
 
 export default async function AllProductsPage() {
@@ -31,7 +35,8 @@ export default async function AllProductsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products?.map((product) => {
             const t = product.translations?.find((t: any) => t.locale === 'az') || product.translations?.[0]
-            const ct = (product.company as any)?.translations?.[0]
+            const companyTranslations = (product.company as any)?.translations
+            const ct = companyTranslations?.find((t: any) => t.locale === 'az') || companyTranslations?.[0]
             const features = (t?.features || {}) as any
             const isService = product.type === 'service'
             return (

@@ -1,26 +1,22 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cn, slugify } from "@/lib/utils";
 import {
-  Plus,
   X,
   Upload,
   Loader2,
   CheckCircle2,
-  Info,
-  DollarSign,
   Languages,
-  FileVideo,
   FileText,
   FileImage,
   Building2,
   Tag,
   CreditCard,
-  Type,
-  Layout
+  Layout,
+  Search,
+  ArrowLeft
 } from "lucide-react";
 import type { Category, Company, CompanyTranslation } from "@/types";
 
@@ -29,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -57,7 +52,6 @@ const LANGUAGES: { code: Locale; label: string }[] = [
 ];
 
 export default function AddContentPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   // Data State
@@ -66,6 +60,8 @@ export default function AddContentPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
 
   // Form State
   const [type, setType] = useState<ProductType>('product');
@@ -79,13 +75,16 @@ export default function AddContentPage() {
   const [tagInput, setTagInput] = useState("");
   const [files, setFiles] = useState<{ file: File; preview: string; id: string }[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<Locale[]>(['AZ']);
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
 
   // Fetch initial data
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        window.location.href = "/login";
         return;
       }
 
@@ -97,7 +96,7 @@ export default function AddContentPage() {
         .single();
 
       if (!compData) {
-        router.push("/onboarding");
+        window.location.href = "/onboarding";
         return;
       }
       setCompany(compData);
@@ -112,9 +111,13 @@ export default function AddContentPage() {
   }, []);
 
   // Cost Calculation
-  const mediaCost = files.length * 0.50;
-  const langCost = (selectedLanguages.length - 1) * 4.00;
-  const aiCost = 12.00;
+  const MEDIA_COST_PER_FILE = 0.50;
+  const LANG_COST_PER_LOCALE = 4.00;
+  const AI_BASE_COST = 12.00;
+
+  const mediaCost = files.length * MEDIA_COST_PER_FILE;
+  const langCost = (selectedLanguages.length - 1) * LANG_COST_PER_LOCALE;
+  const aiCost = AI_BASE_COST;
   const totalCost = mediaCost + langCost + aiCost;
 
   // Handlers
@@ -142,26 +145,28 @@ export default function AddContentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || isSubmitting) return;
+    if (!name || !description || !categoryId || isSubmitting) return;
     setIsSubmitting(true);
+    setError(null);
 
     try {
       // 1. Upload Media
       const uploadedUrls: string[] = [];
-      for (const item of files) {
+      setUploadProgress({ current: 0, total: files.length });
+      for (let i = 0; i < files.length; i++) {
+        const item = files[i];
+        setUploadProgress({ current: i + 1, total: files.length });
         const fileExt = item.file.name.split('.').pop();
         const fileName = `${company?.id}-${Date.now()}-${Math.random()}.${fileExt}`;
         const filePath = `products/${fileName}`;
-
         const { error: uploadError } = await supabase.storage
           .from('products')
           .upload(filePath, item.file);
-
         if (uploadError) throw uploadError;
-
         const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(filePath);
         uploadedUrls.push(publicUrl);
       }
+      setUploadProgress({ current: 0, total: 0 });
 
       // 2. Insert Product
       const slug = `${slugify(name)}-${Date.now().toString(36)}`;
@@ -172,12 +177,14 @@ export default function AddContentPage() {
           slug,
           status: 'draft',
           images: uploadedUrls,
-          type
+          type,
+          category_id: categoryId
         })
         .select()
         .single();
 
       if (productError) throw productError;
+      setCreatedSlug(product.slug);
 
       // 3. Insert Translations
       const translations = selectedLanguages.map(locale => ({
@@ -185,6 +192,8 @@ export default function AddContentPage() {
         locale: locale.toLowerCase(),
         name,
         description,
+        meta_title: metaTitle || name,
+        meta_description: metaDescription || description.slice(0, 160),
         features: {
           keywords: tags,
           price: price || null,
@@ -196,21 +205,13 @@ export default function AddContentPage() {
       const { error: transError } = await supabase.from('product_translations').insert(translations);
       if (transError) throw transError;
 
-      setSuccessMessage("Product submitted for AI processing!");
-
-      // Reset form
+      setSuccessMessage("Məhsul uğurla əlavə edildi!");
       setTimeout(() => {
-        setName("");
-        setDescription("");
-        setPrice("");
-        setTags([]);
-        setFiles([]);
-        setSelectedLanguages(['AZ']);
-        setSuccessMessage(null);
-      }, 3000);
+        window.location.href = "/dashboard/products";
+      }, 2500);
 
     } catch (err: any) {
-      console.error(err);
+      setError(err.message || "Xəta baş verdi. Yenidən cəhd edin.");
     } finally {
       setIsSubmitting(false);
     }
@@ -218,16 +219,51 @@ export default function AddContentPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+      <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-pulse">
+        <div className="h-8 w-64 bg-gray-200 rounded-xl" />
+        <div className="h-4 w-96 bg-gray-100 rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white rounded-2xl border p-10 space-y-6">
+              <div className="h-6 w-32 bg-gray-200 rounded-lg" />
+              <div className="h-11 w-full bg-gray-100 rounded-xl" />
+              <div className="h-11 w-full bg-gray-100 rounded-xl" />
+              <div className="h-32 w-full bg-gray-100 rounded-xl" />
+              <div className="h-11 w-full bg-gray-100 rounded-xl" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl border p-6 space-y-3">
+              <div className="h-5 w-40 bg-gray-200 rounded-lg" />
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from({length: 8}).map((_, i) => (
+                  <div key={i} className="h-10 bg-gray-100 rounded-xl" />
+                ))}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border p-6 space-y-3">
+              <div className="h-5 w-32 bg-gray-200 rounded-lg" />
+              <div className="h-4 w-full bg-gray-100 rounded-lg" />
+              <div className="h-4 w-3/4 bg-gray-100 rounded-lg" />
+              <div className="h-12 w-full bg-gray-200 rounded-xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
+          <a 
+            href="/dashboard/products"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors mb-3"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Məhsullarıma qayıt
+          </a>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Məzmun Əlavə Et</h1>
           <p className="text-muted-foreground">Məhsul və ya xidmətlərinizi ensiklopediyaya əlavə edin — AI axtarışlarda tapılsın.</p>
         </div>
@@ -271,7 +307,7 @@ export default function AddContentPage() {
                 <div className="space-y-6">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <Type className="h-4 w-4 text-indigo-500" />
+                      <FileText className="h-4 w-4 text-indigo-500" />
                       <span className="text-sm font-semibold text-gray-800">Ad</span>
                     </div>
                     <p className="text-xs text-gray-400 pl-6">AI axtarışda birinci baxılan sahə</p>
@@ -323,6 +359,55 @@ export default function AddContentPage() {
                         className="px-4 py-3 text-sm rounded-xl resize-none"
                       />
                       <div className="text-right text-xs text-muted-foreground">{description.length} / 1000</div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="bg-gray-100" />
+
+                <div className="space-y-6">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-indigo-500" />
+                      <span className="text-sm font-semibold text-gray-800">SEO Məlumatları</span>
+                    </div>
+                    <p className="text-xs text-gray-400 pl-6">
+                      AI axtarış sistemlərində görünmə üçün vacibdir
+                    </p>
+                  </div>
+
+                  <div className="grid gap-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-gray-600">Meta Başlıq</Label>
+                        <span className="text-[11px] text-gray-400">{metaTitle.length} / 60</span>
+                      </div>
+                      <Input
+                        value={metaTitle}
+                        onChange={(e) => setMetaTitle(e.target.value.slice(0, 60))}
+                        placeholder="ChatGPT-də axtarışda görünəcək başlıq..."
+                        className="h-11 px-4 text-sm rounded-xl"
+                      />
+                      <p className="text-[11px] text-gray-400">
+                        Boş buraxılsa məhsul adından avtomatik yaranır
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-gray-600">Meta Təsvir</Label>
+                        <span className="text-[11px] text-gray-400">{metaDescription.length} / 160</span>
+                      </div>
+                      <Textarea
+                        rows={3}
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value.slice(0, 160))}
+                        placeholder="Axtarış nəticəsində məhsulun altında görünəcək qısa təsvir..."
+                        className="px-4 py-3 text-sm rounded-xl resize-none"
+                      />
+                      <p className="text-[11px] text-gray-400">
+                        Boş buraxılsa əsas təsvirin ilk 160 simvolu istifadə edilir
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -569,14 +654,25 @@ export default function AddContentPage() {
                 </div>
               </div>
 
+              {error && (
+                <div className="text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100 flex items-center gap-2">
+                  <X className="h-4 w-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
               <Button
                 type="submit"
                 form="add-content-form"
-                disabled={!name || !description || isSubmitting}
+                disabled={!name || !description || !categoryId || isSubmitting}
                 className="w-full h-12 bg-indigo-600 hover:bg-indigo-500 font-semibold rounded-xl shadow-md shadow-indigo-100/50 transition-all active:scale-[0.98] text-sm"
               >
                 {isSubmitting ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Emal edilir...</>
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {uploadProgress.total > 0
+                      ? `${uploadProgress.current}/${uploadProgress.total} fayl yüklənir...`
+                      : "Emal edilir..."}
+                  </span>
                 ) : (
                   "Yayımla →"
                 )}
@@ -676,6 +772,21 @@ export default function AddContentPage() {
           <div>
             <p className="font-bold text-lg leading-none tracking-tight">Məhsul uğurla əlavə edildi!</p>
             <p className="text-sm opacity-90 mt-1 font-medium">Tezliklə ensiklopediyada görünəcək.</p>
+            <div className="flex flex-col gap-1 mt-1">
+              <a href="/dashboard/products" className="text-xs underline opacity-80 block">
+                Məhsullarıma bax →
+              </a>
+              {createdSlug && (
+                <a
+                  href={`/encyclopedia/products/${createdSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs underline opacity-80 block"
+                >
+                  Ensiklopediyada bax →
+                </a>
+              )}
+            </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setSuccessMessage(null)} className="ml-4 hover:bg-white/10 text-white rounded-full">
             <X className="h-4 w-4" />

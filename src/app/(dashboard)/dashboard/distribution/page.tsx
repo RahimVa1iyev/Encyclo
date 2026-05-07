@@ -6,33 +6,51 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Copy, Check, Code2, Globe, Zap } from "lucide-react";
+import { Copy, Check, Code2, Globe, Zap, ExternalLink } from "lucide-react";
+import type { Company, CompanyTranslation } from "@/types";
 
 export default function DistributionPage() {
   const [copied, setCopied] = useState<string | null>(null);
-  const [company, setCompany] = useState<any>(null);
+  const [company, setCompany] = useState<(Company & { translations: CompanyTranslation[] }) | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
   const [baseUrl, setBaseUrl] = useState('');
 
   useEffect(() => {
     async function fetchCompany() {
+      setBaseUrl(window.location.origin);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('companies')
         .select('*, translations:company_translations(*)')
         .eq('owner_id', user.id)
         .single();
-      if (data) setCompany(data);
+      if (data) setCompany(data as (Company & { translations: CompanyTranslation[] }));
+      setIsLoading(false);
     }
     fetchCompany();
-    setBaseUrl(window.location.origin);
   }, []);
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
+  const copyToClipboard = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      // Fallback for older browsers
+      const el = document.createElement('textarea');
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    }
   };
 
   const iframeCode = `<iframe 
@@ -45,6 +63,36 @@ export default function DistributionPage() {
 
   const apiEndpoint = `${baseUrl}/api/widget?type=products&limit=5`;
   const apiEndpointCompanies = `${baseUrl}/api/widget?limit=5`;
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-8 w-32 bg-gray-200 rounded-xl" />
+          <div className="h-4 w-64 bg-gray-100 rounded-xl" />
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 bg-gray-100 rounded-xl" />
+            <div className="space-y-1">
+              <div className="h-4 w-32 bg-gray-200 rounded-lg" />
+              <div className="h-3 w-48 bg-gray-100 rounded-lg" />
+            </div>
+          </div>
+          <div className="h-24 w-full bg-gray-100 rounded-xl" />
+          <div className="h-10 w-36 bg-gray-100 rounded-xl" />
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 bg-gray-100 rounded-xl" />
+            <div className="h-4 w-32 bg-gray-200 rounded-lg" />
+          </div>
+          <div className="h-12 w-full bg-gray-100 rounded-xl" />
+          <div className="h-12 w-full bg-gray-100 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -83,16 +131,18 @@ export default function DistributionPage() {
 
           <Separator className="bg-gray-100" />
           
-          <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">Canlı baxış</p>
-            <iframe
-              src={`/widget/${company?.slug || ''}`}
-              width="100%"
-              height="280"
-              frameBorder="0"
-              className="rounded-xl border border-gray-100"
-            />
-          </div>
+          {company?.slug && (
+            <div className="bg-white rounded-xl border border-gray-100 p-4">
+              <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">Canlı baxış</p>
+              <iframe
+                src={`/widget/${company.slug}`}
+                width="100%"
+                height="280"
+                frameBorder="0"
+                className="rounded-xl border border-gray-100"
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -117,6 +167,15 @@ export default function DistributionPage() {
             <div key={item.key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
               <Badge className="bg-green-100 text-green-700 border-none text-[10px] font-bold shrink-0">GET</Badge>
               <code className="text-xs text-gray-600 flex-1 truncate">{item.endpoint}</code>
+              <a 
+                href={item.endpoint}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shrink-0"
+                title="Test et"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
               <Button
                 onClick={() => copyToClipboard(item.endpoint, item.key)}
                 variant="ghost"

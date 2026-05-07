@@ -66,15 +66,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Logged in — check onboarding
+  // Logged in — check onboarding via user metadata (no DB query)
   if (user && isDashboard) {
-    const { data: company } = await supabase
-      .from('companies')
-      .select('onboarding_completed')
-      .eq('owner_id', user.id)
-      .single()
+    const onboardingCompleted = user.user_metadata?.onboarding_completed
 
-    if (company && !company.onboarding_completed) {
+    if (!onboardingCompleted) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
   }

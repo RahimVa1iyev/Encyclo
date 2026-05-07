@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { 
   Card, 
@@ -22,10 +21,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Loader2, Upload, Building2, Globe, FileText, Search } from "lucide-react";
+import { Loader2, Upload, Building2, Globe, FileText, Search, ExternalLink } from "lucide-react";
+import { cn, inputClass, selectClass } from "@/lib/utils";
+import type { Category } from "@/types";
 
 export default function CompanyProfilePage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -40,29 +40,35 @@ export default function CompanyProfilePage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [companySlug, setCompanySlug] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/login');
+        window.location.href = '/login';
         return;
       }
 
-      const { data: company } = await supabase
-        .from('companies')
-        .select('*, translations:company_translations(*), category:categories(*)')
-        .eq('owner_id', user.id)
-        .single();
+      const [compResult, catsResult] = await Promise.all([
+        supabase
+          .from('companies')
+          .select('*, translations:company_translations(*), category:categories(*)')
+          .eq('owner_id', user.id)
+          .single(),
+        supabase
+          .from('categories')
+          .select('*')
+          .order('name')
+      ]);
 
-      const { data: cats } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
+      const company = compResult.data;
+      const cats = catsResult.data;
 
       if (company) {
         setCompanyId(company.id);
+        setCompanySlug(company.slug || '');
         setCategoryId(company.category_id || '');
         setWebsite(company.website || '');
         setLogoUrl(company.logo_url || null);
@@ -81,7 +87,7 @@ export default function CompanyProfilePage() {
     };
 
     fetchData();
-  }, [router, supabase]);
+  }, []);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -150,8 +156,44 @@ export default function CompanyProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+      <div className="max-w-3xl mx-auto space-y-8 pb-12 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-8 w-48 bg-gray-200 rounded-xl" />
+          <div className="h-4 w-72 bg-gray-100 rounded-xl" />
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="h-14 bg-gray-50 border-b border-gray-100 px-6 flex items-center">
+            <div className="h-5 w-24 bg-gray-200 rounded-lg" />
+          </div>
+          <div className="p-6 flex items-center gap-6">
+            <div className="w-24 h-24 rounded-full bg-gray-200 flex-shrink-0" />
+            <div className="space-y-2">
+              <div className="h-4 w-32 bg-gray-200 rounded-lg" />
+              <div className="h-3 w-48 bg-gray-100 rounded-lg" />
+              <div className="h-8 w-28 bg-gray-100 rounded-xl mt-2" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="h-14 bg-gray-50 border-b border-gray-100 px-6 flex items-center">
+            <div className="h-5 w-36 bg-gray-200 rounded-lg" />
+          </div>
+          <div className="p-6 space-y-5">
+            <div className="h-11 w-full bg-gray-100 rounded-xl" />
+            <div className="h-11 w-full bg-gray-100 rounded-xl" />
+            <div className="h-11 w-full bg-gray-100 rounded-xl" />
+            <div className="h-28 w-full bg-gray-100 rounded-xl" />
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="h-14 bg-gray-50 border-b border-gray-100 px-6 flex items-center">
+            <div className="h-5 w-32 bg-gray-200 rounded-lg" />
+          </div>
+          <div className="p-6 space-y-5">
+            <div className="h-11 w-full bg-gray-100 rounded-xl" />
+            <div className="h-24 w-full bg-gray-100 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -159,9 +201,22 @@ export default function CompanyProfilePage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
       {/* Page header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Şirkət Profili</h1>
-        <p className="text-muted-foreground mt-1">Şirkətiniz haqqında məlumatları yeniləyin</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Şirkət Profili</h1>
+          <p className="text-muted-foreground mt-1">Şirkətiniz haqqında məlumatları yeniləyin</p>
+        </div>
+        {companySlug && (
+          <a 
+            href={`/encyclopedia/companies/${companySlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors flex-shrink-0"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Ensiklopediyada bax
+          </a>
+        )}
       </div>
 
       {/* Section 1: Logo */}
@@ -230,14 +285,14 @@ export default function CompanyProfilePage() {
               placeholder="Şirkətin rəsmi adı" 
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="rounded-xl h-11 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+              className={inputClass}
             />
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="category">Kateqoriya</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger id="category" className="rounded-xl h-11 border-gray-200 focus:ring-indigo-500">
+              <SelectTrigger id="category" className={cn(selectClass, "h-11")}>
                 <SelectValue placeholder="Kateqoriya seçin" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -259,7 +314,7 @@ export default function CompanyProfilePage() {
                 placeholder="https://example.com" 
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                className="pl-10 rounded-xl h-11 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                className={cn(inputClass, "pl-10")}
               />
             </div>
           </div>
@@ -274,7 +329,7 @@ export default function CompanyProfilePage() {
               placeholder="Şirkətiniz haqqında qısa məlumat..." 
               value={description}
               onChange={(e) => setDescription(e.target.value.slice(0, 500))}
-              className="rounded-xl min-h-[120px] border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-all resize-none"
+              className={cn(inputClass, "min-h-[120px] resize-none py-3")}
             />
           </div>
         </CardContent>
@@ -304,7 +359,7 @@ export default function CompanyProfilePage() {
               placeholder="Google-da görünəcək başlıq" 
               value={metaTitle}
               onChange={(e) => setMetaTitle(e.target.value.slice(0, 60))}
-              className="rounded-xl h-11 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+              className={inputClass}
             />
           </div>
 
@@ -318,7 +373,7 @@ export default function CompanyProfilePage() {
               placeholder="Google-da görünəcək qısa təsvir..." 
               value={metaDescription}
               onChange={(e) => setMetaDescription(e.target.value.slice(0, 160))}
-              className="rounded-xl min-h-[100px] border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-all resize-none"
+              className={cn(inputClass, "min-h-[100px] resize-none py-3")}
             />
           </div>
         </CardContent>

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, inputClass, selectClass } from "@/lib/utils";
 import { Check, Upload, ArrowRight, Loader2, Globe, Building2, FileText } from "lucide-react";
 import type { Category, Company, CompanyTranslation } from "@/types";
 
@@ -25,7 +25,7 @@ export default function OnboardingPage() {
   // Step 2 State
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
@@ -99,11 +99,11 @@ export default function OnboardingPage() {
 
   const handleLogoUpload = async (file: File) => {
     if (file.size > 2 * 1024 * 1024) {
-      setUploadError("Image must be less than 2MB");
+      setLogoUploadError("Şəkil 2MB-dan kiçik olmalıdır");
       return;
     }
     
-    setUploadError(null);
+    setLogoUploadError(null);
     setLogoFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setLogoPreview(reader.result as string);
@@ -122,11 +122,11 @@ export default function OnboardingPage() {
       const fileName = `${company?.id}-${Math.random()}.${fileExt}`;
       const filePath = `logos/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from('logos')
         .upload(filePath, logoFile);
 
-      if (uploadError) throw uploadError;
+      if (storageError) throw storageError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('logos')
@@ -142,7 +142,7 @@ export default function OnboardingPage() {
       setLogoPreview(publicUrl);
       setCurrentStep(3);
     } catch (err: any) {
-      setUploadError(err.message || "Upload failed");
+      setLogoUploadError(err.message || "Yükləmə zamanı xəta baş verdi");
     } finally {
       setIsSaving(false);
     }
@@ -157,9 +157,12 @@ export default function OnboardingPage() {
         .eq("id", company?.id);
       
       if (error) throw error;
-      
-      router.push("/dashboard");
-      router.refresh();
+
+      await supabase.auth.updateUser({
+        data: { onboarding_completed: true },
+      });
+
+      window.location.href = "/dashboard";
     } catch (err) {
       console.error(err);
     } finally {
@@ -189,12 +192,12 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-sm font-semibold text-indigo-600 mb-1">
-            Step {currentStep} of 3
+            {currentStep}/3-cü addım
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {currentStep === 1 && "Complete Company Profile"}
-            {currentStep === 2 && "Add Your Logo"}
-            {currentStep === 3 && "Everything's Ready!"}
+            {currentStep === 1 && "Şirkət profilini tamamlayın"}
+            {currentStep === 2 && "Logonuzu əlavə edin"}
+            {currentStep === 3 && "Hər şey hazırdır!"}
           </h1>
         </div>
 
@@ -203,25 +206,25 @@ export default function OnboardingPage() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <Building2 className="h-4 w-4" /> Company Name
+                <Building2 className="h-4 w-4" /> Şirkət adı
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
-                placeholder="Enter company name"
+                className={inputClass}
+                placeholder="Şirkət adını daxil edin"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Kateqoriya</label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                className={selectClass}
               >
-                <option value="">Select a category</option>
+                <option value="">Kateqoriya seçin</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -230,27 +233,27 @@ export default function OnboardingPage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <Globe className="h-4 w-4" /> Website URL (Optional)
+                <Globe className="h-4 w-4" /> Vebsayt (İstəyə bağlı)
               </label>
               <input
                 type="url"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                className="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                className={inputClass}
                 placeholder="https://example.com"
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Description
+                <FileText className="h-4 w-4" /> Təsvir
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value.slice(0, 500))}
                 rows={4}
-                className="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Tell us about your company..."
+                className={cn(inputClass, "resize-none")}
+                placeholder="Şirkətiniz haqqında yazın..."
               />
               <div className="text-right text-xs text-gray-400 mt-1">
                 {description.length} / 500
@@ -262,7 +265,7 @@ export default function OnboardingPage() {
               disabled={!name || !categoryId || isSaving}
               className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
-              {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Next <ArrowRight className="h-4 w-4" /></>}
+              {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Növbəti <ArrowRight className="h-4 w-4" /></>}
             </button>
           </div>
         )}
@@ -294,34 +297,34 @@ export default function OnboardingPage() {
               {logoPreview ? (
                 <div className="flex flex-col items-center">
                   <img src={logoPreview} alt="Logo preview" className="h-32 w-32 object-contain rounded-lg mb-4 shadow-md" />
-                  <p className="text-sm text-indigo-600 font-medium">Click to change logo</p>
+                  <p className="text-sm text-indigo-600 font-medium">Loqonu dəyişmək üçün klikləyin</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
                   <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Upload className="h-8 w-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-900 font-semibold">Click or drag to upload logo</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG or WEBP up to 2MB</p>
+                  <p className="text-gray-900 font-semibold">Logo yükləmək üçün klikləyin və ya sürükləyin</p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG və ya WEBP, maksimum 2MB</p>
                 </div>
               )}
             </div>
 
-            {uploadError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded-lg">{uploadError}</p>}
+            {logoUploadError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded-lg">{logoUploadError}</p>}
 
             <div className="flex gap-4">
               <button
                 onClick={() => setCurrentStep(3)}
                 className="flex-1 text-gray-500 py-3 font-semibold hover:text-gray-700 transition-colors"
               >
-                Skip for now
+                Sonraya saxla
               </button>
               <button
                 onClick={saveLogo}
                 disabled={isSaving}
                 className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:bg-indigo-500 transition-all flex items-center justify-center gap-2"
               >
-                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Next"}
+                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Növbəti"}
               </button>
             </div>
           </div>
@@ -337,7 +340,7 @@ export default function OnboardingPage() {
             </div>
 
             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-left">
-              <h3 className="font-semibold text-gray-900 mb-4 text-center">Onboarding Summary</h3>
+              <h3 className="font-semibold text-gray-900 mb-4 text-center">Xülasə</h3>
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 bg-white rounded-lg border flex items-center justify-center overflow-hidden flex-shrink-0">
                   {logoPreview ? (
@@ -349,7 +352,7 @@ export default function OnboardingPage() {
                 <div className="min-w-0">
                   <p className="font-bold text-gray-900 truncate">{name}</p>
                   <p className="text-sm text-gray-500">
-                    {categories.find(c => c.id === categoryId)?.name || "No Category"}
+                    {categories.find(c => c.id === categoryId)?.name || "Kateqoriya yoxdur"}
                   </p>
                 </div>
               </div>
@@ -360,7 +363,7 @@ export default function OnboardingPage() {
               disabled={isSaving}
               className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-500 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
-              {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Go to Dashboard"}
+              {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Dashboarda keç"}
             </button>
           </div>
         )}

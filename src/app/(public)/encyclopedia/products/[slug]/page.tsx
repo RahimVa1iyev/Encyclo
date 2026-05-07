@@ -61,23 +61,30 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   // Increment view count (fire and forget)
   supabase
-    .from('products')
-    .update({ views: (product.views || 0) + 1 })
-    .eq('id', product.id)
+    .rpc('increment_views', { product_id: product.id })
     .then(() => {}) // ignore result
 
   // Fetch forum posts count and last 3 posts
-  const { count: forumCount } = await supabase
-    .from('forum_posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('product_id', product.id)
-
-  const { data: latestPosts } = await supabase
-    .from('forum_posts')
-    .select('*')
-    .eq('product_id', product.id)
-    .order('created_at', { ascending: false })
-    .limit(3)
+  const [{ count: forumCount }, { data: latestPosts }, { data: faqPosts }] = await Promise.all([
+    supabase
+      .from('forum_posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('product_id', product.id)
+      .eq('is_faq', false),
+    supabase
+      .from('forum_posts')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_faq', false)
+      .order('created_at', { ascending: false })
+      .limit(3),
+    supabase
+      .from('forum_posts')
+      .select('question, content')
+      .eq('product_id', product.id)
+      .eq('is_faq', true)
+      .order('created_at', { ascending: false })
+  ])
 
   const translation = product.translations?.[0]
   const companyTranslation = product.company?.translations?.[0]
@@ -102,6 +109,25 @@ export default async function ProductPage({ params }: { params: { slug: string }
           })
         }}
       />
+      {faqPosts && faqPosts.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": faqPosts.map((faq: any) => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.content
+                }
+              }))
+            })
+          }}
+        />
+      )}
 
       <div className="container mx-auto px-4 py-12 max-w-5xl space-y-10">
         {/* Back Link */}
@@ -186,7 +212,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                   {latestPosts.map((post: any) => (
                     <div key={post.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-2">
                       <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        İstifadəçi {post.user_id.slice(0, 4)} • {new Date(post.created_at).toLocaleDateString('az-AZ')}
+                        Anonim istifadəçi • {new Date(post.created_at).toLocaleDateString('az-AZ')}
                       </div>
                       <p className="text-slate-600 text-sm italic">"{post.content.slice(0, 150)}{post.content.length > 150 ? '...' : ''}"</p>
                     </div>
@@ -250,9 +276,23 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     </div>
                   </div>
 
-                  <button className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]">
-                    İndi müraciət et
-                  </button>
+                  {product.company?.website ? (
+                    <a 
+                      href={product.company.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full py-4 text-center bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+                    >
+                      İndi müraciət et
+                    </a>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-4 bg-gray-100 text-gray-400 font-black rounded-2xl cursor-not-allowed"
+                    >
+                      Vebsayt mövcud deyil
+                    </button>
+                  )}
                   
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">

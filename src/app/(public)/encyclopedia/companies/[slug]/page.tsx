@@ -93,9 +93,6 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                 <Badge variant="secondary" className="bg-indigo-100 text-indigo-700">
                   {company.category?.name}
                 </Badge>
-                <Badge variant="outline" className="border-slate-200 text-slate-500">
-                  Yerli Şirkət
-                </Badge>
               </div>
               <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
                 {translation?.name || company.slug}
@@ -108,7 +105,13 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                   className="inline-flex items-center gap-2 text-indigo-600 font-bold hover:underline"
                 >
                   <Globe className="w-4 h-4" />
-                  {new URL(company.website).hostname}
+                  {(() => {
+                    try {
+                      return new URL(company.website).hostname;
+                    } catch {
+                      return company.website;
+                    }
+                  })()}
                 </a>
               )}
             </div>

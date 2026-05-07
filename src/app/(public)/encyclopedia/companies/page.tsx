@@ -6,6 +6,10 @@ import { Badge } from '@/components/ui/badge'
 export const metadata = {
   title: 'Bütün Şirkətlər — Encyclo',
   description: 'Azərbaycanın texnologiya şirkətləri',
+  openGraph: {
+    title: 'Bütün Şirkətlər — Encyclo',
+    description: 'Azərbaycanın texnologiya şirkətləri',
+  },
 }
 
 export default async function AllCompaniesPage() {

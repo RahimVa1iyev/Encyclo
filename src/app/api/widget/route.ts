@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const category = searchParams.get('category')
-  const limit = parseInt(searchParams.get('limit') || '5')
+  const limit = Math.min(parseInt(searchParams.get('limit') || '5') || 5, 20)
   const type = searchParams.get('type') // 'companies' | 'products'
 
   const supabase = createServerSupabaseClient()
@@ -62,5 +62,16 @@ export async function GET(request: NextRequest) {
       'Access-Control-Allow-Origin': '*',
       'Cache-Control': 'public, s-maxage=60',
     }
+  })
+}
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
   })
 }

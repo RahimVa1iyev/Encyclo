@@ -3,7 +3,7 @@ export default function robots() {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/dashboard/',
+      disallow: ['/dashboard/', '/onboarding/', '/widget/'],
     },
     sitemap: 'https://encyclo.az/sitemap.xml',
   }

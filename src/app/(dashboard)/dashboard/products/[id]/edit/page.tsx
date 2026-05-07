@@ -1,26 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { cn, slugify } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   X,
   Upload,
   Loader2,
-  CheckCircle2,
-  Info,
-  DollarSign,
   Languages,
-  FileText,
   FileImage,
-  Building2,
   Tag,
   CreditCard,
-  Type,
   Layout,
-  Pencil
+  ArrowLeft,
+  ExternalLink,
+  Search
 } from "lucide-react";
+import type { Category, Company } from "@/types";
 import { toast } from "sonner";
 
 // shadcn UI imports
@@ -28,8 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -55,16 +51,16 @@ const LANGUAGES: { code: Locale; label: string }[] = [
 ];
 
 export default function EditProductPage() {
-  const router = useRouter();
   const params = useParams();
   const supabase = createClient();
   const productId = params.id as string;
 
   // Data State
-  const [categories, setCategories] = useState<any[]>([]);
-  const [company, setCompany] = useState<any | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form State
   const [type, setType] = useState<ProductType>('product');
@@ -79,27 +75,40 @@ export default function EditProductPage() {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<{ file: File; preview: string; id: string }[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<Locale[]>(['AZ']);
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [productSlug, setProductSlug] = useState<string>("");
 
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        window.location.href = "/login";
         return;
       }
 
-      // 1. Fetch Company
-      const { data: compData } = await supabase
-        .from("companies")
-        .select("id, owner_id")
-        .eq("owner_id", user.id)
-        .single();
+      // 1. Fetch Company and Categories in parallel
+      const [compResult, catResult] = await Promise.all([
+        supabase
+          .from("companies")
+          .select("id, owner_id")
+          .eq("owner_id", user.id)
+          .single(),
+        supabase
+          .from("categories")
+          .select("*")
+          .order("name")
+      ]);
+
+      const compData = compResult.data;
+      const catData = catResult.data;
 
       if (!compData) {
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
         return;
       }
-      setCompany(compData);
+      setCompany(compData as unknown as Company);
+      if (catData) setCategories(catData);
 
       // 2. Fetch Product & Translations
       const { data: product, error: productError } = await supabase
@@ -110,12 +119,13 @@ export default function EditProductPage() {
 
       if (productError || !product || product.company_id !== compData.id) {
         toast.error("Məhsul tapılmadı və ya giriş icazəniz yoxdur");
-        router.push("/dashboard/products");
+        window.location.href = "/dashboard/products";
         return;
       }
 
       // Pre-fill fields
       setType(product.type || 'product');
+      setProductSlug(product.slug || "");
       setCategoryId(product.category_id || "");
       setExistingImages(product.images || []);
       
@@ -123,6 +133,8 @@ export default function EditProductPage() {
       if (azTranslation) {
         setName(azTranslation.name || "");
         setDescription(azTranslation.description || "");
+        setMetaTitle(azTranslation.meta_title || "");
+        setMetaDescription(azTranslation.meta_description || "");
         const features = azTranslation.features || {};
         
         // Fallback for category_id from features if not in products table
@@ -139,14 +151,10 @@ export default function EditProductPage() {
       const locales = product.translations?.map((t: any) => t.locale.toUpperCase() as Locale) || ['AZ'];
       setSelectedLanguages(locales);
 
-      // 3. Fetch Categories
-      const { data: catData } = await supabase.from("categories").select("*").order("name");
-      if (catData) setCategories(catData);
-
       setIsLoading(false);
     }
     init();
-  }, [productId, router, supabase]);
+  }, [productId]);
 
   const handleAddTag = (e: React.KeyboardEvent | React.FocusEvent) => {
     if (e.type === 'keydown' && (e as React.KeyboardEvent).key !== 'Enter' && (e as React.KeyboardEvent).key !== ',') return;
@@ -179,8 +187,9 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || isSubmitting) return;
+    if (!name || !description || !categoryId || isSubmitting) return;
     setIsSubmitting(true);
+    setError(null);
 
     try {
       // 1. Upload new media files
@@ -223,6 +232,8 @@ export default function EditProductPage() {
             locale: locale.toLowerCase(),
             name,
             description,
+            meta_title: metaTitle || name,
+            meta_description: metaDescription || description.slice(0, 160),
             features: {
               keywords: tags,
               price: price || null,
@@ -236,9 +247,9 @@ export default function EditProductPage() {
       }
 
       toast.success("Məhsul yeniləndi");
-      router.push("/dashboard/products");
+      window.location.href = "/dashboard/products";
     } catch (err: any) {
-      console.error(err);
+      setError(err.message || "Xəta baş verdi. Yenidən cəhd edin.");
       toast.error(err.message || "Xəta baş verdi");
     } finally {
       setIsSubmitting(false);
@@ -247,19 +258,60 @@ export default function EditProductPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+      <div className="max-w-4xl mx-auto space-y-6 pb-20 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-gray-200 rounded-xl" />
+            <div className="h-4 w-48 bg-gray-100 rounded-xl" />
+          </div>
+          <div className="h-9 w-36 bg-gray-100 rounded-xl" />
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-10 space-y-8">
+          <div className="h-10 w-48 bg-gray-100 rounded-xl" />
+          <div className="h-px w-full bg-gray-100" />
+          <div className="space-y-4">
+            <div className="h-11 w-full bg-gray-100 rounded-xl" />
+            <div className="h-11 w-full bg-gray-100 rounded-xl" />
+            <div className="h-32 w-full bg-gray-100 rounded-xl" />
+          </div>
+          <div className="h-px w-full bg-gray-100" />
+          <div className="h-11 w-full bg-gray-100 rounded-xl" />
+          <div className="h-px w-full bg-gray-100" />
+          <div className="grid grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-gray-100 rounded-2xl" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
+          <a 
+            href="/dashboard/products"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors mb-3"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Məhsullarıma qayıt
+          </a>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Məhsulu Redaktə Et</h1>
           <p className="text-muted-foreground">Məhsul və ya xidmət məlumatlarını yeniləyin.</p>
         </div>
+        {productSlug && (
+          <a 
+            href={`/encyclopedia/products/${productSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors flex-shrink-0"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Ensiklopediyada bax
+          </a>
+        )}
       </div>
 
       <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
@@ -332,6 +384,44 @@ export default function EditProductPage() {
                     className="px-4 py-3 text-sm rounded-xl resize-none"
                   />
                   <div className="text-right text-xs text-muted-foreground">{description.length} / 1000</div>
+                </div>
+              </div>
+            </div>
+
+            <Separator className="bg-gray-100" />
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4 text-indigo-500" />
+                <span className="text-sm font-semibold text-gray-800">SEO Məlumatları</span>
+              </div>
+              <div className="grid gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-gray-600">Meta Başlıq</Label>
+                    <span className="text-[11px] text-gray-400">{metaTitle.length} / 60</span>
+                  </div>
+                  <Input
+                    value={metaTitle}
+                    onChange={(e) => setMetaTitle(e.target.value.slice(0, 60))}
+                    placeholder="ChatGPT-də axtarışda görünəcək başlıq..."
+                    className="h-11 px-4 text-sm rounded-xl"
+                  />
+                  <p className="text-[11px] text-gray-400">Boş buraxılsa məhsul adından avtomatik yaranır</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-gray-600">Meta Təsvir</Label>
+                    <span className="text-[11px] text-gray-400">{metaDescription.length} / 160</span>
+                  </div>
+                  <Textarea
+                    rows={3}
+                    value={metaDescription}
+                    onChange={(e) => setMetaDescription(e.target.value.slice(0, 160))}
+                    placeholder="Axtarış nəticəsində məhsulun altında görünəcək qısa təsvir..."
+                    className="px-4 py-3 text-sm rounded-xl resize-none"
+                  />
+                  <p className="text-[11px] text-gray-400">Boş buraxılsa əsas təsvirin ilk 160 simvolu istifadə edilir</p>
                 </div>
               </div>
             </div>
@@ -510,10 +600,16 @@ export default function EditProductPage() {
               </div>
             </div>
 
-            <div className="flex justify-end pt-6">
+            <div className="flex flex-col gap-4 items-end pt-6">
+              {error && (
+                <div className="w-full text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100 flex items-center gap-2">
+                  <X className="h-4 w-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
               <Button
                 type="submit"
-                disabled={!name || !description || isSubmitting}
+                disabled={!name || !description || !categoryId || isSubmitting}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl px-10 h-12 shadow-lg shadow-indigo-100"
               >
                 {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saxlanılır...</> : "Dəyişiklikləri saxla"}

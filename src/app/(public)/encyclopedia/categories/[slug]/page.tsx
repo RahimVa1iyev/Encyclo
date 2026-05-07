@@ -10,8 +10,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     .select('*')
     .eq('slug', params.slug)
     .single()
+  const name = category?.name || 'Kateqoriya'
   return {
-    title: `${category?.name || 'Kateqoriya'} — Encyclo`,
+    title: `${name} — Encyclo`,
+    description: `${name} kateqoriyasındakı Azərbaycan şirkətləri və məhsulları.`,
+    openGraph: {
+      title: `${name} — Encyclo`,
+      description: `${name} kateqoriyasındakı Azərbaycan şirkətləri və məhsulları.`,
+    },
   }
 }
 
@@ -26,19 +32,20 @@ export default async function CategoryPage({ params }: { params: { slug: string 
 
   if (!category) notFound()
 
-  const { data: products } = await supabase
-    .from('products')
-    .select('*, translations:product_translations(*), company:companies(slug, logo_url, translations:company_translations(name))')
-    .eq('status', 'active')
-    .eq('category_id', category.id)
-    .order('created_at', { ascending: false })
-
-  const { data: companies } = await supabase
-    .from('companies')
-    .select('*, translations:company_translations(*)')
-    .eq('status', 'active')
-    .eq('category_id', category.id)
-    .order('created_at', { ascending: false })
+  const [{ data: products }, { data: companies }] = await Promise.all([
+    supabase
+      .from('products')
+      .select('*, translations:product_translations(*), company:companies(slug, logo_url, translations:company_translations(name))')
+      .eq('status', 'active')
+      .eq('category_id', category.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('companies')
+      .select('*, translations:company_translations(*)')
+      .eq('status', 'active')
+      .eq('category_id', category.id)
+      .order('created_at', { ascending: false })
+  ])
 
   return (
     <div className="min-h-screen bg-slate-50/30 py-16">

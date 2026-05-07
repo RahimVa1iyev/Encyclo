@@ -10,9 +10,11 @@ import {
   Pause, 
   Trash2, 
   Loader2,
-  Building2,
-  Pencil
+  Pencil,
+  Search,
+  Eye
 } from "lucide-react";
+import type { Product, ProductTranslation } from "@/types";
 import Link from "next/link";
 import { format } from "date-fns";
 import { az } from "date-fns/locale";
@@ -20,46 +22,66 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function MyProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<(Product & { translations: ProductTranslation[] })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "suspended">("all");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const supabase = createClient();
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: company } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('owner_id', user.id)
-        .single();
-
-      if (!company) return;
-
-      const { data } = await supabase
-        .from('products')
-        .select('*, translations:product_translations(*)')
-        .eq('company_id', company.id)
-        .order('created_at', { ascending: false });
-
-      if (data) setProducts(data);
-    } catch (error) {
-      console.error(error);
-      toast.error("Məlumatları yükləyərkən xəta baş verdi");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const filteredProducts = products.filter((p) => {
+    const name = p.translations?.[0]?.name || p.slug;
+    const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: company } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('owner_id', user.id)
+          .single();
+
+        if (!company) return;
+
+        const { data } = await supabase
+          .from('products')
+          .select('*, translations:product_translations(*)')
+          .eq('company_id', company.id)
+          .order('created_at', { ascending: false });
+
+        if (data) setProducts(data as (Product & { translations: ProductTranslation[] })[]);
+      } catch (error) {
+        console.error(error);
+        toast.error("Məlumatları yükləyərkən xəta baş verdi");
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchProducts();
   }, []);
 
-  const updateStatus = async (productId: string, newStatus: string) => {
+  const updateStatus = async (productId: string, newStatus: "draft" | "active" | "suspended") => {
     try {
       const { error } = await supabase
         .from('products')
@@ -67,21 +89,21 @@ export default function MyProductsPage() {
         .eq('id', productId);
 
       if (error) throw error;
+
+      setProducts(prev =>
+        prev.map(p => p.id === productId ? { ...p, status: newStatus } : p)
+      );
       
       toast.success(
         newStatus === 'active' ? "Məhsul aktiv edildi" : "Məhsul dayandırıldı"
       );
-      fetchProducts();
     } catch (error) {
       toast.error("Statusu yeniləyərkən xəta baş verdi");
     }
   };
 
   const deleteProduct = async (productId: string) => {
-    if (!confirm("Bu məhsulu silmək istədiyinizə əminsiniz?")) return;
-
     try {
-      // First delete translations
       const { error: transError } = await supabase
         .from('product_translations')
         .delete()
@@ -89,7 +111,6 @@ export default function MyProductsPage() {
 
       if (transError) throw transError;
 
-      // Then delete product
       const { error: prodError } = await supabase
         .from('products')
         .delete()
@@ -97,10 +118,12 @@ export default function MyProductsPage() {
 
       if (prodError) throw prodError;
 
+      setProducts(prev => prev.filter(p => p.id !== productId));
       toast.success("Məhsul silindi");
-      fetchProducts();
     } catch (error) {
       toast.error("Məhsulu silərkən xəta baş verdi");
+    } finally {
+      setDeleteId(null);
     }
   };
 
@@ -118,8 +141,40 @@ export default function MyProductsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+      <div className="max-w-7xl mx-auto space-y-8 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-gray-200 rounded-xl" />
+            <div className="h-4 w-64 bg-gray-100 rounded-xl" />
+          </div>
+          <div className="h-11 w-44 bg-gray-200 rounded-xl" />
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b bg-gray-50/50 grid grid-cols-5 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-4 bg-gray-200 rounded-lg" />
+            ))}
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="px-6 py-4 border-b border-gray-50 grid grid-cols-5 gap-4 items-center">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gray-100 rounded-2xl flex-shrink-0" />
+                <div className="space-y-2">
+                  <div className="h-4 w-32 bg-gray-200 rounded-lg" />
+                  <div className="h-3 w-20 bg-gray-100 rounded-lg" />
+                </div>
+              </div>
+              <div className="h-6 w-16 bg-gray-100 rounded-lg" />
+              <div className="h-6 w-16 bg-gray-100 rounded-lg mx-auto" />
+              <div className="h-4 w-24 bg-gray-100 rounded-lg" />
+              <div className="flex justify-end gap-2">
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <div key={j} className="h-10 w-10 bg-gray-100 rounded-xl" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -137,6 +192,37 @@ export default function MyProductsPage() {
           </Link>
         </Button>
       </div>
+
+      {products.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Məhsul axtar..."
+              className="block w-full rounded-xl border-0 py-2.5 pl-10 pr-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-all"
+            />
+          </div>
+          <div className="flex gap-2">
+            {(["all", "active", "draft", "suspended"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={cn(
+                  "px-4 py-2.5 text-xs font-semibold rounded-xl border transition-all",
+                  statusFilter === s
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                )}
+              >
+                {s === "all" ? "Hamısı" : s === "active" ? "Aktiv" : s === "draft" ? "Qaralama" : "Dayandırılıb"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {products.length === 0 ? (
         <Card className="border-dashed border-2 py-20 rounded-3xl bg-gray-50/30">
@@ -165,11 +251,14 @@ export default function MyProductsPage() {
                   <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Növ</th>
                   <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
                   <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Tarix</th>
+                  <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">
+                    Baxışlar
+                  </th>
                   <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Əməliyyatlar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {products.map((product) => {
+                {filteredProducts.map((product) => {
                   const translation = product.translations?.[0];
                   const name = translation?.name || product.slug;
                   const thumbnail = product.images?.[0];
@@ -203,6 +292,12 @@ export default function MyProductsPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap font-medium">
                         {format(new Date(product.created_at), "d MMMM yyyy", { locale: az })}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-gray-700">
+                          <Eye className="h-3.5 w-3.5 text-gray-400" />
+                          {(product as any).views || 0}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
@@ -243,7 +338,7 @@ export default function MyProductsPage() {
                           )}
 
                           <Button 
-                            onClick={() => deleteProduct(product.id)}
+                            onClick={() => setDeleteId(product.id)}
                             variant="ghost" 
                             size="icon" 
                             className="h-10 w-10 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50"
@@ -256,11 +351,38 @@ export default function MyProductsPage() {
                     </tr>
                   );
                 })}
+                {filteredProducts.length === 0 && products.length > 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-400">
+                      Axtarışa uyğun məhsul tapılmadı
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
       )}
+
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Məhsulu silmək istəyirsiniz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu əməliyyat geri alına bilməz. Məhsul və bütün tərcümələri həmişəlik silinəcək.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Ləğv et</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteId && deleteProduct(deleteId)}
+              className="bg-red-600 hover:bg-red-500 rounded-xl"
+            >
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

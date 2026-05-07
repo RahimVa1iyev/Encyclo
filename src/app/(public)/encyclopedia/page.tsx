@@ -120,7 +120,7 @@ export default async function EncyclopediaPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {companies?.map((company) => {
-              const translation = company.translations?.[0]
+              const translation = company.translations?.find((t: any) => t.locale === 'az') || company.translations?.[0]
               return (
                 <Link key={company.id} href={`/encyclopedia/companies/${company.slug}`}>
                   <Card className="group hover:border-indigo-500 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 h-full bg-white border-slate-100 overflow-hidden">
@@ -234,6 +234,11 @@ export default async function EncyclopediaPage() {
                 </Link>
               )
             })}
+          </div>
+          <div className="md:hidden pt-4">
+            <Link href="/encyclopedia/products" className="flex items-center justify-center gap-2 w-full py-4 bg-white border border-slate-200 rounded-2xl text-indigo-600 font-bold">
+              Hamısına bax <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </section>
       </div>
