@@ -16,6 +16,12 @@ export default function PublicLayout({
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
+              <Link href="/encyclopedia" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">
+                Ensiklopediya
+              </Link>
+              <Link href="/forum" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">
+                Forum
+              </Link>
               <Link href="/features" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">
                 Features
               </Link>

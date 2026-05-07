@@ -14,9 +14,10 @@ import {
   CreditCard,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Building2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -26,6 +27,7 @@ const sidebarLinks = [
   { name: "Məhsullarım", href: "/dashboard/products", icon: Package },
   { name: "AI Məzmun", href: "/dashboard/ai-content", icon: Sparkles },
   { name: "Yayım", href: "/dashboard/distribution", icon: Share2 },
+  { name: "Şirkət Profili", href: "/dashboard/company", icon: Building2 },
   { name: "Ensiklopediya", href: "/dashboard/encyclopedia", icon: BookOpen },
   { name: "Forum", href: "/dashboard/forum", icon: MessageSquare },
   { name: "Hesabatlar", href: "/dashboard/reports", icon: BarChart3 },
@@ -39,8 +41,24 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [companyName, setCompanyName] = useState('...');
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchCompany() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('company_translations')
+        .select('name')
+        .eq('locale', 'az')
+        .limit(1)
+        .single()
+      if (data) setCompanyName(data.name)
+    }
+    fetchCompany()
+  }, [supabase.auth]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -78,6 +96,7 @@ export default function DashboardLayout({
                 <Link
                   key={link.name}
                   href={link.href}
+                  onClick={() => setIsSidebarOpen(false)}
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 group",
                     isActive
@@ -119,9 +138,9 @@ export default function DashboardLayout({
 
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">
-              R
+              {companyName.charAt(0).toUpperCase()}
             </div>
-            <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">Rahim</span>
+            <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">{companyName}</span>
           </div>
         </header>
 

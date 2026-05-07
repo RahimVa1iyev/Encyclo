@@ -164,7 +164,7 @@ export default function AddContentPage() {
       }
 
       // 2. Insert Product
-      const slug = slugify(name);
+      const slug = `${slugify(name)}-${Date.now().toString(36)}`;
       const { data: product, error: productError } = await supabase
         .from('products')
         .insert({

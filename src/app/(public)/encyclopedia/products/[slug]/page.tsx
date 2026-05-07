@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from 'next/link'
-import { ArrowLeft, Building2, Layout, Tag, DollarSign, Info } from 'lucide-react'
+import { ArrowLeft, Building2, Layout, Tag, DollarSign, Info, MessageSquare } from 'lucide-react'
 import { notFound } from 'next/navigation'
 
 type ProductFeatures = {
@@ -16,18 +16,35 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const supabase = createServerSupabaseClient()
   const { data: product } = await supabase
     .from('products')
-    .select('*, translations:product_translations(*)')
+    .select('*, translations:product_translations(*), company:companies(translations:company_translations(name))')
     .eq('slug', params.slug)
     .single()
 
   if (!product) return { title: 'Məhsul tapılmadı' }
 
-  const translation = product.translations?.[0]
+  const translation = product.translations?.find((t: any) => t.locale === 'az') || product.translations?.[0]
   const name = translation?.name || product.slug
-  
+  const description = translation?.description || `${name} haqqında ətraflı məlumat.`
+  const image = product.images?.[0]
+  const companyName = (product.company as any)?.translations?.[0]?.name
+
   return {
-    title: `${name} — Ensiklopediya`,
-    description: translation?.description || `${name} texnoloji həlli haqqında ətraflı məlumat.`,
+    title: name,
+    description,
+    openGraph: {
+      type: 'website',
+      title: `${name} — ${companyName || 'Encyclo'}`,
+      description,
+      images: image
+        ? [{ url: image, width: 1200, height: 630, alt: name }]
+        : undefined,
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title: `${name} — ${companyName || 'Encyclo'}`,
+      description,
+      images: image ? [image] : undefined,
+    },
   }
 }
 
@@ -41,6 +58,26 @@ export default async function ProductPage({ params }: { params: { slug: string }
     .single()
 
   if (!product) notFound()
+
+  // Increment view count (fire and forget)
+  supabase
+    .from('products')
+    .update({ views: (product.views || 0) + 1 })
+    .eq('id', product.id)
+    .then(() => {}) // ignore result
+
+  // Fetch forum posts count and last 3 posts
+  const { count: forumCount } = await supabase
+    .from('forum_posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('product_id', product.id)
+
+  const { data: latestPosts } = await supabase
+    .from('forum_posts')
+    .select('*')
+    .eq('product_id', product.id)
+    .order('created_at', { ascending: false })
+    .limit(3)
 
   const translation = product.translations?.[0]
   const companyTranslation = product.company?.translations?.[0]
@@ -129,6 +166,50 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 </div>
               </div>
             )}
+
+            {/* Forum Section */}
+            <div className="space-y-6 pt-10 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                  <MessageSquare className="w-6 h-6 text-indigo-600" /> Forum müzakirəsi
+                </h2>
+                <Link 
+                  href={`/encyclopedia/products/${product.slug}/forum`}
+                  className="text-indigo-600 font-bold text-sm hover:underline"
+                >
+                  Hamısına bax ({forumCount || 0})
+                </Link>
+              </div>
+
+              {latestPosts && latestPosts.length > 0 ? (
+                <div className="grid gap-4">
+                  {latestPosts.map((post: any) => (
+                    <div key={post.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-2">
+                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        İstifadəçi {post.user_id.slice(0, 4)} • {new Date(post.created_at).toLocaleDateString('az-AZ')}
+                      </div>
+                      <p className="text-slate-600 text-sm italic">"{post.content.slice(0, 150)}{post.content.length > 150 ? '...' : ''}"</p>
+                    </div>
+                  ))}
+                  <Link 
+                    href={`/encyclopedia/products/${product.slug}/forum`}
+                    className="flex items-center justify-center py-4 bg-slate-50 text-slate-500 font-bold rounded-2xl border border-dashed border-slate-200 hover:bg-slate-100 transition-colors"
+                  >
+                    Müzakirəyə qoşul
+                  </Link>
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-10 rounded-3xl border border-dashed border-slate-200 text-center space-y-4">
+                  <p className="text-slate-500 font-medium">Bu məhsul haqqında hələ heç bir müzakirə yoxdur.</p>
+                  <Link 
+                    href={`/encyclopedia/products/${product.slug}/forum`}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                  >
+                    İlk müzakirəni başlat
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}

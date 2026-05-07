@@ -1,15 +1,25 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import Link from 'next/link'
-import { Search, Building2, Layout, ArrowRight } from 'lucide-react'
+import { Building2, Layout, ArrowRight } from 'lucide-react'
+import SearchBar from '@/components/encyclopedia/SearchBar'
 
 type ProductFeatures = {
   keywords?: string[]
   price?: string | number
   currency?: string
   price_type?: string
+}
+
+export const metadata = {
+  title: 'Ensiklopediya',
+  description: 'Azərbaycan şirkətlərini, məhsullarını və xidmətlərini kəşf edin.',
+  openGraph: {
+    title: 'Encyclo Ensiklopediyası',
+    description: 'Azərbaycan şirkətlərini, məhsullarını və xidmətlərini kəşf edin.',
+    type: 'website',
+  },
 }
 
 export default async function EncyclopediaPage() {
@@ -65,13 +75,7 @@ export default async function EncyclopediaPage() {
             </p>
           </div>
           
-          <div className="relative max-w-xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <Input 
-              placeholder="Şirkət, məhsul və ya xidmət axtar..." 
-              className="pl-12 h-14 text-lg rounded-2xl border-slate-200 shadow-xl shadow-indigo-100/20 focus:ring-2 focus:ring-indigo-500 bg-white"
-            />
-          </div>
+          <SearchBar />
         </section>
 
         {/* Categories Grid */}

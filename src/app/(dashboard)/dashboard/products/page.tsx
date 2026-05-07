@@ -10,7 +10,8 @@ import {
   Pause, 
   Trash2, 
   Loader2,
-  Building2
+  Building2,
+  Pencil
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -205,6 +206,12 @@ export default function MyProductsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
+                          <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50" title="Redaktə et">
+                            <Link href={`/dashboard/products/${product.id}/edit`}>
+                              <Pencil className="h-4.5 w-4.5" />
+                            </Link>
+                          </Button>
+
                           <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50" title="Bax">
                             <Link href={`/encyclopedia/products/${product.slug}`} target="_blank">
                               <ExternalLink className="h-4.5 w-4.5" />

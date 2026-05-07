@@ -15,12 +15,27 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   if (!company) return { title: 'Şirkət tapılmadı' }
 
-  const translation = company.translations?.[0]
+  const translation = company.translations?.find((t: any) => t.locale === 'az') || company.translations?.[0]
   const name = translation?.name || company.slug
-  
+  const description = translation?.description || `${name} şirkəti haqqında ətraflı məlumat.`
+
   return {
-    title: `${name} — Ensiklopediya`,
-    description: translation?.description || `${name} texnologiya şirkəti haqqında ətraflı məlumat.`,
+    title: name,
+    description,
+    openGraph: {
+      type: 'profile',
+      title: `${name} — Encyclo`,
+      description,
+      images: company.logo_url
+        ? [{ url: company.logo_url, width: 400, height: 400, alt: name }]
+        : undefined,
+    },
+    twitter: {
+      card: 'summary',
+      title: `${name} — Encyclo`,
+      description,
+      images: company.logo_url ? [company.logo_url] : undefined,
+    },
   }
 }
 
