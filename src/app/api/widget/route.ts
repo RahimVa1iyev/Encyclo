@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '5') || 5, 20)
   const type = searchParams.get('type') // 'companies' | 'products'
 
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   if (type === 'products') {
     let query = supabase

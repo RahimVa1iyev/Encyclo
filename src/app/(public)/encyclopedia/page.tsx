@@ -23,7 +23,7 @@ export const metadata = {
 }
 
 export default async function EncyclopediaPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data: companies } = await supabase
     .from('companies')

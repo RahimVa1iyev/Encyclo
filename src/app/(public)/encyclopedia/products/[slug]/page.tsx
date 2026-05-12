@@ -12,8 +12,9 @@ type ProductFeatures = {
   price_type?: string
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient()
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient()
   const { data: product } = await supabase
     .from('products')
     .select('*, translations:product_translations(*), company:companies(translations:company_translations(name))')
@@ -48,9 +49,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient()
-  
+export default async function ProductPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient()
+
   const { data: product } = await supabase
     .from('products')
     .select('*, translations:product_translations(*), company:companies(*, translations:company_translations(*))')
@@ -90,7 +92,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const companyTranslation = product.company?.translations?.[0]
   const isService = product.type === 'service'
   const features = (translation?.features || {}) as ProductFeatures
-  
+
   return (
     <div className="min-h-screen bg-slate-50/50">
       <script

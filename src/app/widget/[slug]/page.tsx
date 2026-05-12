@@ -1,7 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export default async function WidgetPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient()
+export default async function WidgetPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient()
 
   // 1. Şirkəti slug-a görə tap
   const { data: company } = await supabase

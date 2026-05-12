@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { Package } from 'lucide-react'
 import { notFound } from 'next/navigation'
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient()
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient()
   const { data: category } = await supabase
     .from('categories')
     .select('*')
@@ -21,8 +22,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function CategoryPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient()
+export default async function CategoryPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient()
 
   const { data: category } = await supabase
     .from('categories')

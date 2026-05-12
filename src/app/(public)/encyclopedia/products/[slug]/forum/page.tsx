@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductForumPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient();
+export default async function ProductForumPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   // Get product

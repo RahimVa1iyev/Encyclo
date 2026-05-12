@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { Globe, Layout, ArrowRight, Building2 } from 'lucide-react'
 import { notFound } from 'next/navigation'
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient()
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient()
   const { data: company } = await supabase
     .from('companies')
     .select('*, translations:company_translations(*), category:categories(*)')
@@ -39,9 +40,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function CompanyPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient()
-  
+export default async function CompanyPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = await createServerSupabaseClient()
+
   const { data: company } = await supabase
     .from('companies')
     .select('*, translations:company_translations(*), category:categories(*)')
@@ -51,7 +53,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   if (!company) notFound()
 
   const translation = company.translations?.[0]
-  
+
   const { data: products } = await supabase
     .from('products')
     .select('*, translations:product_translations(*)')
