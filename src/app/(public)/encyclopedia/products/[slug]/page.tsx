@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from 'next/link'
-import { ArrowLeft, Building2, Layout, Tag, DollarSign, Info, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Building2, Layout, Tag, DollarSign, Info, MessageSquare, Package } from 'lucide-react'
 import { notFound } from 'next/navigation'
 
 type ProductFeatures = {
@@ -32,6 +32,9 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   return {
     title: name,
     description,
+    alternates: {
+      canonical: `https://encyclo-phi.vercel.app/encyclopedia/products/${params.slug}`,
+    },
     openGraph: {
       type: 'website',
       title: `${name} — ${companyName || 'Encyclo'}`,
@@ -55,7 +58,7 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
 
   const { data: product } = await supabase
     .from('products')
-    .select('*, translations:product_translations(*), company:companies(*, translations:company_translations(*))')
+    .select('*, translations:product_translations(*), company:companies(*, translations:company_translations(*), category:categories(*))')
     .eq('slug', params.slug)
     .single()
 
@@ -66,8 +69,8 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
     .rpc('increment_views', { product_id: product.id })
     .then(() => {}) // ignore result
 
-  // Fetch forum posts count and last 3 posts
-  const [{ count: forumCount }, { data: latestPosts }, { data: faqPosts }] = await Promise.all([
+  // Fetch forum posts count, last 3 posts, faq posts and related products
+  const [{ count: forumCount }, { data: latestPosts }, { data: faqPosts }, { data: relatedProducts }] = await Promise.all([
     supabase
       .from('forum_posts')
       .select('*', { count: 'exact', head: true })
@@ -85,7 +88,14 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
       .select('question, content')
       .eq('product_id', product.id)
       .eq('is_faq', true)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('products')
+      .select('*, translations:product_translations(*)')
+      .eq('company_id', product.company_id)
+      .eq('status', 'active')
+      .neq('id', product.id)
+      .limit(3)
   ])
 
   const translation = product.translations?.[0]
@@ -131,12 +141,59 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
         />
       )}
 
-      <div className="container mx-auto px-4 py-12 max-w-5xl space-y-10">
-        {/* Back Link */}
-        <Link href={`/encyclopedia/companies/${product.company?.slug}`} className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          {companyTranslation?.name} profili
-        </Link>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Ensiklopediya",
+                "item": "https://encyclo-phi.vercel.app/encyclopedia"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": product.company?.category?.name,
+                "item": `https://encyclo-phi.vercel.app/encyclopedia/categories/${product.company?.category?.slug}`
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": companyTranslation?.name,
+                "item": `https://encyclo-phi.vercel.app/encyclopedia/companies/${product.company?.slug}`
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "name": translation?.name || product.slug,
+                "item": `https://encyclo-phi.vercel.app/encyclopedia/products/${product.slug}`
+              }
+            ]
+          })
+        }}
+      />
+
+      <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center gap-2 text-sm font-bold">
+          <Link href="/encyclopedia" className="text-slate-400 hover:text-indigo-600 transition-colors">
+            Ensiklopediya
+          </Link>
+          <span className="text-slate-300">/</span>
+          <Link href={`/encyclopedia/categories/${product.company?.category?.slug}`} className="text-slate-400 hover:text-indigo-600 transition-colors">
+            {product.company?.category?.name}
+          </Link>
+          <span className="text-slate-300">/</span>
+          <Link href={`/encyclopedia/companies/${product.company?.slug}`} className="text-slate-400 hover:text-indigo-600 transition-colors">
+            {companyTranslation?.name}
+          </Link>
+          <span className="text-slate-300">/</span>
+          <span className="text-indigo-600 truncate max-w-[200px]">{translation?.name || product.slug}</span>
+        </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Main Content */}
@@ -194,11 +251,37 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
                 </div>
               </div>
             )}
+            {/* FAQ Section */}
+            {faqPosts && faqPosts.length > 0 && (
+              <div className="space-y-6 pt-10 border-t border-slate-200">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2 uppercase tracking-tight">
+                    <Info className="w-6 h-6 text-indigo-600" /> Tez-tez verilən suallar
+                  </h2>
+                  <Badge className="bg-indigo-50 text-indigo-700 border-none px-2 py-0.5 rounded-lg text-xs font-bold">
+                    {faqPosts.length}
+                  </Badge>
+                </div>
+                <div className="space-y-4">
+                  {faqPosts.map((faq: any, idx: number) => (
+                    <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                      <p className="font-bold text-slate-900 flex gap-2">
+                        <span className="text-indigo-600">S:</span> {faq.question}
+                      </p>
+                      <div className="h-px bg-slate-50 w-full" />
+                      <p className="text-slate-600 text-sm leading-relaxed">
+                        {faq.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Forum Section */}
             <div className="space-y-6 pt-10 border-t border-slate-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2 uppercase tracking-tight">
                   <MessageSquare className="w-6 h-6 text-indigo-600" /> Forum müzakirəsi
                 </h2>
                 <Link 
@@ -238,6 +321,40 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
                 </div>
               )}
             </div>
+            {relatedProducts && relatedProducts.length > 0 && (
+              <div className="space-y-6 pt-10 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2 uppercase tracking-tight">
+                    <Building2 className="w-6 h-6 text-indigo-600" /> Bu şirkətin digər məhsulları
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {relatedProducts.map((rel: any) => {
+                    const rt = rel.translations?.[0];
+                    const rf = (rt?.features || {}) as ProductFeatures;
+                    return (
+                      <Link key={rel.id} href={`/encyclopedia/products/${rel.slug}`}>
+                        <div className="bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-xl hover:border-indigo-200 transition-all group flex flex-col h-full">
+                          <div className="aspect-square bg-slate-50 rounded-xl mb-3 overflow-hidden">
+                            {rel.images?.[0] ? (
+                              <img src={rel.images[0]} alt={rt?.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-200"><Package className="w-8 h-8" /></div>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors line-clamp-2">{rt?.name || rel.slug}</h4>
+                          </div>
+                          <p className="mt-2 text-xs font-black text-indigo-600">
+                            {rf.price ? `${rf.price} ${rf.currency || 'AZN'}` : 'Əlaqə saxlayın'}
+                          </p>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

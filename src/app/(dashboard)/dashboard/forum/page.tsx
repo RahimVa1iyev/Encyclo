@@ -10,6 +10,10 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
+  Sparkles,
+  Brain,
+  Check,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +59,11 @@ export default function ForumDashboardPage() {
   const [answer, setAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // AI FAQ State
+  const [aiFAQs, setAiFAQs] = useState<{ question: string; answer: string; selected: boolean }[]>([]);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -173,6 +182,87 @@ export default function ForumDashboardPage() {
     }
   };
 
+  const handleGenerateAIFAQ = async (product: ProductWithFAQs) => {
+    const translation = product.translations?.find(t => t.locale === 'az') || product.translations?.[0];
+    const description = translation?.description;
+    const productName = translation?.name || product.slug;
+
+    if (!description) {
+      toast.warning("FAQ yaratmaq üçün əvvəlcə məhsul təsviri əlavə edin");
+      return;
+    }
+
+    setGeneratingFor(product.id);
+    setExpandedProduct(product.id);
+    setIsGeneratingAI(true);
+    setAiFAQs([]);
+
+    try {
+      const response = await fetch("/api/ai-faq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description, productName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "AI generation error");
+      }
+
+      const { faqs } = await response.json();
+      setAiFAQs(faqs.map((f: any) => ({ ...f, selected: true })));
+    } catch (err: any) {
+      toast.error(err.message || "FAQ yaradarkən xəta baş verdi");
+      setGeneratingFor(null);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  const handleSaveSelectedFAQs = async (productId: string) => {
+    const selected = aiFAQs.filter(f => f.selected);
+    if (selected.length === 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("İstifadəçi tapılmadı");
+
+      const { data, error } = await supabase.from("forum_posts").insert(
+        selected.map(faq => ({
+          product_id: productId,
+          user_id: user.id,
+          content: faq.answer,
+          question: faq.question,
+          is_faq: true,
+        }))
+      ).select();
+
+      if (error) throw error;
+
+      // Update local state
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId
+            ? { ...p, faqs: [...(data as FAQ[]), ...p.faqs] }
+            : p
+        )
+      );
+
+      setAiFAQs([]);
+      setGeneratingFor(null);
+      toast.success(`${selected.length} FAQ yadda saxlanıldı`);
+    } catch (err: any) {
+      toast.error(err.message || "Xəta baş verdi");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleAllFAQs = (select: boolean) => {
+    setAiFAQs(prev => prev.map(f => ({ ...f, selected: select })));
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto space-y-6 animate-pulse">
@@ -281,6 +371,17 @@ export default function ForumDashboardPage() {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    handleGenerateAIFAQ(product);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  AI ilə FAQ yarat
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setAddingFAQFor(isAddingFAQ ? null : product.id);
                     setExpandedProduct(product.id);
                     setQuestion("");
@@ -302,6 +403,102 @@ export default function ForumDashboardPage() {
             {/* Expanded content */}
             {isExpanded && (
               <div className="border-t border-gray-100">
+                {/* AI Generation Panel */}
+                {generatingFor === product.id && (
+                  <div className="p-5 bg-purple-50/30 border-b border-purple-100/50 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <Brain className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <p className="text-sm font-bold text-purple-900">AI FAQ Generasiyası</p>
+                      </div>
+                      {!isGeneratingAI && aiFAQs.length > 0 && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => toggleAllFAQs(true)}
+                            className="text-[10px] font-bold text-purple-600 uppercase tracking-tight hover:underline"
+                          >
+                            Hamısını seç
+                          </button>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            onClick={() => toggleAllFAQs(false)}
+                            className="text-[10px] font-bold text-gray-400 uppercase tracking-tight hover:underline"
+                          >
+                            Heç birini seçmə
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {isGeneratingAI ? (
+                      <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
+                        <Loader2 className="h-8 w-8 text-purple-400 animate-spin" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-purple-900">FAQ-lar hazırlanır...</p>
+                          <p className="text-xs text-purple-500">Məhsul təsviri analiz edilir və 5 sual yaradılır</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="grid gap-3">
+                          {aiFAQs.map((faq, idx) => (
+                            <div 
+                              key={idx}
+                              onClick={() => {
+                                setAiFAQs(prev => prev.map((f, i) => i === idx ? { ...f, selected: !f.selected } : f));
+                              }}
+                              className={cn(
+                                "p-4 rounded-xl border transition-all cursor-pointer flex gap-3",
+                                faq.selected 
+                                  ? "bg-white border-purple-200 shadow-sm ring-1 ring-purple-100" 
+                                  : "bg-gray-50/50 border-gray-100 opacity-60 hover:opacity-100"
+                              )}
+                            >
+                              <div className={cn(
+                                "h-5 w-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors",
+                                faq.selected ? "bg-purple-600 border-purple-600" : "bg-white border-gray-300"
+                              )}>
+                                {faq.selected && <Check className="h-3 w-3 text-white" />}
+                              </div>
+                              <div className="space-y-1.5 min-w-0">
+                                <p className="text-xs font-black text-gray-900 leading-tight">{faq.question}</p>
+                                <p className="text-xs text-gray-500 leading-relaxed">{faq.answer}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex gap-2 justify-end pt-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-xl text-xs"
+                            onClick={() => {
+                              setGeneratingFor(null);
+                              setAiFAQs([]);
+                            }}
+                          >
+                            Ləğv et
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={aiFAQs.filter(f => f.selected).length === 0 || isSubmitting}
+                            onClick={() => handleSaveSelectedFAQs(product.id)}
+                            className="bg-purple-600 hover:bg-purple-700 rounded-xl text-xs px-6"
+                          >
+                            {isSubmitting ? (
+                              <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Saxlanılır...</>
+                            ) : (
+                              `Seçilənləri saxla (${aiFAQs.filter(f => f.selected).length})`
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* Add FAQ form */}
                 {isAddingFAQ && (
                   <div className="p-5 bg-indigo-50/30 border-b border-indigo-100/50 space-y-4">

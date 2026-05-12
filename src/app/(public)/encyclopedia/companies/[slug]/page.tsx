@@ -23,6 +23,9 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   return {
     title: name,
     description,
+    alternates: {
+      canonical: `https://encyclo-phi.vercel.app/encyclopedia/companies/${params.slug}`,
+    },
     openGraph: {
       type: 'profile',
       title: `${name} — Encyclo`,
@@ -75,8 +78,49 @@ export default async function CompanyPage(props: { params: Promise<{ slug: strin
           })
         }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Ensiklopediya",
+                "item": "https://encyclo-phi.vercel.app/encyclopedia"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": company.category?.name,
+                "item": `https://encyclo-phi.vercel.app/encyclopedia/categories/${company.category?.slug}`
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": translation?.name || company.slug,
+                "item": `https://encyclo-phi.vercel.app/encyclopedia/companies/${company.slug}`
+              }
+            ]
+          })
+        }}
+      />
 
-      <div className="container mx-auto px-4 py-12 space-y-12">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center gap-2 text-sm font-bold">
+          <Link href="/encyclopedia" className="text-slate-400 hover:text-indigo-600 transition-colors">
+            Ensiklopediya
+          </Link>
+          <span className="text-slate-300">/</span>
+          <Link href={`/encyclopedia/categories/${company.category?.slug}`} className="text-slate-400 hover:text-indigo-600 transition-colors">
+            {company.category?.name}
+          </Link>
+          <span className="text-slate-300">/</span>
+          <span className="text-indigo-600">{translation?.name || company.slug}</span>
+        </nav>
         {/* Company Header */}
         <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-100 shadow-sm flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left">
           <div className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0 shadow-inner">
@@ -187,6 +231,22 @@ export default async function CompanyPage(props: { params: Promise<{ slug: strin
             </div>
           )}
         </section>
+
+        {/* Related Category Sidebar Link */}
+        <div className="pt-12 border-t border-slate-100">
+          <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-slate-100 shadow-sm group">
+            <div>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Əlaqəli kateqoriya</p>
+              <h4 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{company.category?.name}</h4>
+            </div>
+            <Link 
+              href={`/encyclopedia/categories/${company.category?.slug}`}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-all border border-slate-100"
+            >
+              Bütün şirkətlər <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
