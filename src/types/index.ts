@@ -31,7 +31,7 @@ export interface Company {
 
 export interface ProductFeatures {
   keywords?: string[];
-  price?: string | number;
+  price?: number;
   currency?: string;
   price_type?: string;
   category_id?: string;
@@ -54,7 +54,7 @@ export interface Product {
   slug: string;
   images: string[];
   type: 'product' | 'service';
-  status: 'draft' | 'active' | 'suspended';
+  status: 'draft' | 'active';
   views?: number;
   created_at: string;
   translations?: ProductTranslation[];
@@ -64,7 +64,7 @@ export interface Product {
 export interface ForumPost {
   id: string;
   product_id: string;
-  user_id: string;
+  user_id: string | null;
   content: string;
   is_faq?: boolean;
   question?: string;
@@ -74,9 +74,23 @@ export interface ForumPost {
 export interface Subscription {
   id: string;
   company_id: string;
-  plan: 'basic' | 'pro' | 'enterprise';
+  plan: 'starter' | 'growth' | 'scale';
   locales: string[];
-  status: 'active' | 'cancelled' | 'past_due';
+  status: 'active' | 'canceled' | 'past_due';
   expires_at?: string;
   created_at: string;
+}
+
+export type Locale = 'az' | 'en' | 'ru'
+
+export type PlanType = 'starter' | 'growth' | 'scale'
+
+export interface WidgetResponse {
+  company: Pick<Company, 'id' | 'slug' | 'logo_url'> & { name: string }
+  products: Array<Pick<Product, 'id' | 'slug' | 'images' | 'views'> & { name: string; description?: string }>
+}
+
+export interface SearchResponse {
+  companies: Company[]
+  products: Product[]
 }

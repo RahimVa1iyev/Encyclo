@@ -51,10 +51,10 @@ export default function SearchBar() {
 
   return (
     <div ref={containerRef} className="relative w-full max-w-xl mx-auto">
-      <div className="relative">
+      <div className="flex items-center gap-3 rounded-full bg-white pl-5 pr-2 py-2 shadow-lg border border-border" style={{ color: 'var(--foreground)' }}>
         {isLoading
-          ? <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 w-5 h-5 animate-spin" />
-          : <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+          ? <Loader2 className="text-indigo-400 w-5 h-5 animate-spin flex-shrink-0" />
+          : <Search className="text-muted-foreground w-5 h-5 flex-shrink-0" />
         }
         <input
           type="text"
@@ -62,8 +62,14 @@ export default function SearchBar() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => hasResults && setIsOpen(true)}
           placeholder="Şirkət, məhsul və ya xidmət axtar..."
-          className="w-full pl-12 pr-4 h-14 text-base rounded-2xl border border-slate-200 shadow-xl shadow-indigo-100/20 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="w-full text-base outline-none bg-transparent"
         />
+        <button
+          className="rounded-full px-5 py-2 text-sm font-semibold btn-press transition-colors flex-shrink-0 text-white"
+          style={{ backgroundColor: 'var(--accent)' }}
+        >
+          Axtar
+        </button>
       </div>
 
       {/* Dropdown Results */}
@@ -79,7 +85,7 @@ export default function SearchBar() {
               {results.companies.map((item: any) => (
                 <Link
                   key={item.company_id}
-                  href={`/encyclopedia/companies/${(item.companies as any)?.slug}`}
+                  href={`/companies/${(item.companies as any)?.slug}`}
                   onClick={() => { setIsOpen(false); setQuery(""); }}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
                 >
@@ -104,7 +110,7 @@ export default function SearchBar() {
               {results.products.map((item: any) => (
                 <Link
                   key={item.product_id}
-                  href={`/encyclopedia/products/${(item.products as any)?.slug}`}
+                  href={`/products/${(item.products as any)?.slug}`}
                   onClick={() => { setIsOpen(false); setQuery(""); }}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
                 >

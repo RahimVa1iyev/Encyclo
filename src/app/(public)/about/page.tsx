@@ -1,70 +1,98 @@
-import { ArrowRight, BookOpen, Globe, Zap } from "lucide-react";
+import { ArrowRight, Target, Eye, Heart } from "lucide-react";
 import Link from "next/link";
+import { Card, CTAButton } from "@/components/ui-kit";
 
 export const metadata = {
   title: "Haqqında — Encyclo",
   description: "Encyclo — Azərbaycan şirkətlərinin məhsul və xidmətlərini AI axtarış sistemlərində görünən hala gətirən platforma.",
-};
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/about`,
+  },
+  openGraph: {
+    title: "Haqqında — Encyclo",
+    description: "Encyclo — Azərbaycan şirkətlərinin məhsul və xidmətlərini AI axtarış sistemlərində görünən hala gətirən platforma.",
+    type: "website",
+  },
+}
 
 export default function AboutPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "Haqqında — Encyclo",
+    "description": "Encyclo — Azərbaycan şirkətlərinin məhsul və xidmətlərini AI axtarış sistemlərində görünən hala gətirən platforma.",
+    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/about`,
+    "publisher": {
+      "@type": "Organization",
+      "name": "Encyclo",
+      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encyclo-phi.vercel.app",
+      "email": "hello@encyclo.az",
+      "foundingDate": "2024"
+    }
+  }
+
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
-      <div className="bg-gradient-to-b from-indigo-50/50 to-white py-20 sm:py-28">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-6">
-            Azərbaycan biznesini
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent"> AI dövrünə</span> hazırlayırıq
+      <div style={{ backgroundColor: 'var(--hero-bg)', color: 'var(--hero-fg)' }} className="relative overflow-hidden py-24 sm:py-32">
+        <div className="absolute inset-0 opacity-[0.06]" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+          backgroundSize: '32px 32px',
+        }} />
+        <div className="relative max-w-3xl mx-auto px-6 text-center">
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-6">
+            Azərbaycan biznesini <span style={{ color: 'var(--accent)' }}>AI dövrünə</span> hazırlayırıq
           </h1>
-          <p className="text-lg text-gray-500 leading-relaxed">
+          <p className="text-lg md:text-xl leading-relaxed" style={{ opacity: 0.85 }}>
             Encyclo — Azərbaycan şirkətlərinin məhsul və xidmətlərini ensiklopediya formatında yayımlayan, ChatGPT, Perplexity və Google AI kimi sistemlərdə görünən hala gətirən B2B platformadır.
           </p>
         </div>
       </div>
 
       {/* Mission */}
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      <div className="max-w-5xl mx-auto px-6 py-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           {[
             {
-              icon: BookOpen,
-              color: "text-indigo-600",
-              bg: "bg-indigo-50",
+              icon: Target,
               title: "Missiyamız",
               desc: "Azərbaycan şirkətlərinin məhsullarını qlobal AI axtarış sistemlərində görünən etmək — dil baryerini aradan qaldırmaq.",
             },
             {
-              icon: Globe,
-              color: "text-blue-600",
-              bg: "bg-blue-50",
+              icon: Eye,
               title: "Visionumuz",
-              desc: "Hər Azərbaycan şirkətinin məhsulu 8 dildə, dünyanın istənilən yerindəki potensial müştəri tərəfindən tapıla bilsin.",
+              desc: "Hər Azərbaycan şirkətinin məhsulu çoxdilli formatda, dünyanın istənilən yerindəki potensial müştəri tərəfindən tapıla bilsin.",
             },
             {
-              icon: Zap,
-              color: "text-violet-600",
-              bg: "bg-violet-50",
+              icon: Heart,
               title: "Dəyərimiz",
               desc: "GEO — Generative Engine Optimization. Ənənəvi SEO-dan fərqli olaraq, AI sistemlərinin anlaya biləcəyi strukturlaşdırılmış məzmun.",
             },
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.title} className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm text-center">
-                <div className={`h-12 w-12 ${item.bg} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                  <Icon className={`h-6 w-6 ${item.color}`} />
+              <Card key={item.title} className="text-center">
+                <div
+                  className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: 'var(--badge-bg)', color: 'var(--badge-fg)' }}
+                >
+                  <Icon className="h-6 w-6" />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-3">{item.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-              </div>
+                <h3 className="font-bold mb-3">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </Card>
             );
           })}
         </div>
 
         {/* Story */}
-        <div className="bg-gray-50 rounded-2xl border border-gray-100 p-8 md:p-12 mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Haqqımızda</h2>
-          <div className="space-y-4 text-gray-600 leading-relaxed">
+        <div className="rounded-3xl border border-border bg-surface p-8 md:p-12 mb-16">
+          <h2 className="text-2xl font-bold mb-6">Haqqımızda</h2>
+          <div className="space-y-4 text-muted-foreground leading-relaxed">
             <p>
               Encyclo 2024-cü ildə Azərbaycan texnologiya ekosistemindəki boşluğu doldurmaq məqsədilə yaradılıb. AI axtarış sistemlərinin sürətlə yayılması ilə birlikdə, şirkətlər yalnız Google-da deyil, ChatGPT, Perplexity kimi platformalarda da görünməli oldu.
             </p>
@@ -75,29 +103,29 @@ export default function AboutPage() {
         </div>
 
         {/* Contact */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 md:p-12 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Əlaqə</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Email</p>
-              <a href="mailto:hello@encyclo.az" className="text-indigo-600 font-semibold hover:underline">
+        <div className="rounded-3xl border border-border bg-surface p-10 text-center">
+          <h2 className="text-2xl font-bold mb-3">Əlaqə</h2>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-8">
+            Hər hansı bir sualınız və ya təklifiniz var? Bizimlə əlaqə saxlayın və ya platformamıza qoşulun.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto mb-10">
+            <div className="p-4 rounded-xl border border-border bg-muted/30">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Email</p>
+              <a href="mailto:hello@encyclo.az" className="font-bold hover:text-accent transition-colors">
                 hello@encyclo.az
               </a>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Platforma</p>
-              <Link href="/encyclopedia" className="text-indigo-600 font-semibold hover:underline">
+            <div className="p-4 rounded-xl border border-border bg-muted/30">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Platforma</p>
+              <Link href="/encyclopedia" className="font-bold hover:text-accent transition-colors">
                 encyclo.az/encyclopedia
               </Link>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all active:scale-95"
-            >
+          <div className="pt-6 border-t border-border">
+            <CTAButton to="/register" variant="primary">
               Platformaya qoşulun <ArrowRight className="h-4 w-4" />
-            </Link>
+            </CTAButton>
           </div>
         </div>
       </div>

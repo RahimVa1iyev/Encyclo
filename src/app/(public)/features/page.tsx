@@ -1,56 +1,53 @@
 import { Search, Globe, Zap, Code2, BarChart3, MessageSquare, Shield, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { Card, CTAButton, Badge } from "@/components/ui-kit";
 
 export const metadata = {
   title: "Xüsusiyyətlər — Encyclo",
   description: "Encyclo platformasının əsas xüsusiyyətləri — GEO optimizasiya, widget inteqrasiyası, çoxdilli yayım.",
-};
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/features`,
+  },
+  openGraph: {
+    title: "Xüsusiyyətlər — Encyclo",
+    description: "Encyclo platformasının əsas xüsusiyyətləri — GEO optimizasiya, widget inteqrasiyası, çoxdilli yayım.",
+    type: "website",
+  },
+}
 
 const features = [
   {
     icon: Search,
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
     title: "GEO Optimizasiya",
     desc: "Generative Engine Optimization — məhsullarınız ChatGPT, Perplexity, Google AI kimi sistemlərdə axtarış nəticələrində birbaşa görünür. Strukturlaşdırılmış JSON-LD schema avtomatik əlavə edilir.",
     badge: "Əsas xüsusiyyət",
   },
   {
     icon: Globe,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
     title: "Çoxdilli Yayım",
-    desc: "Məhsullarınız 8 dildə — AZ, EN, RU, DE, FR, ES, TR, ZH — ayrıca optimallaşdırılmış səhifələrdə yayımlanır. Hər dil ayrıca SEO strukturuna malikdir.",
+    desc: "Məhsullarınız Azərbaycan, ingilis və rus dillərində ayrıca optimallaşdırılmış səhifələrdə yayımlanır. Hər dil ayrıca SEO strukturuna malikdir.",
     badge: null,
   },
   {
     icon: Code2,
-    color: "text-violet-600",
-    bg: "bg-violet-50",
     title: "Widget & API İnteqrasiyası",
     desc: "Partner xəbər və portal saytları iframe widget vasitəsilə məhsullarınızı öz auditoriyasına göstərir. REST API ilə xüsusi inteqrasiya da mümkündür.",
     badge: null,
   },
   {
     icon: MessageSquare,
-    color: "text-green-600",
-    bg: "bg-green-50",
     title: "FAQ & Forum Sistemi",
     desc: "Məhsullarınıza tez-tez verilən sualları əlavə edin — FAQPage JSON-LD ilə işarələnir. AI axtarışlarda sual-cavab formatında birbaşa görünür.",
     badge: "GEO üçün vacib",
   },
   {
     icon: BarChart3,
-    color: "text-orange-600",
-    bg: "bg-orange-50",
     title: "Analitika & Hesabatlar",
     desc: "Məhsullarınızın baxış sayı, forum aktivliyi və performans göstəriciləri real vaxtda izlənilir. Hansı məhsulun daha çox diqqət çəkdiyini görün.",
     badge: null,
   },
   {
     icon: Shield,
-    color: "text-red-600",
-    bg: "bg-red-50",
     title: "Təhlükəsiz & Etibarlı",
     desc: "Supabase infrastrukturu üzərində qurulub. Row Level Security ilə məlumatlarınız yalnız sizə məxsusdur. Frankfurt serverləri — GDPR uyğun.",
     badge: null,
@@ -58,20 +55,40 @@ const features = [
 ];
 
 export default function FeaturesPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Xüsusiyyətlər — Encyclo",
+    "description": "Encyclo platformasının əsas xüsusiyyətləri — GEO optimizasiya, widget inteqrasiyası, çoxdilli yayım.",
+    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/features`,
+    "publisher": {
+      "@type": "Organization",
+      "name": "Encyclo",
+      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encyclo-phi.vercel.app"
+    }
+  }
+
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
-      <div className="bg-gradient-to-b from-indigo-50/50 to-white py-20 sm:py-28">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
-            <Zap className="h-3.5 w-3.5" />
+      <div style={{ backgroundColor: 'var(--hero-bg)', color: 'var(--hero-fg)' }} className="relative overflow-hidden py-24 sm:py-32">
+        <div className="absolute inset-0 opacity-[0.06]" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+          backgroundSize: '32px 32px',
+        }} />
+        <div className="relative max-w-4xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-semibold uppercase tracking-widest mb-6">
+            <Zap className="h-3.5 w-3.5" style={{ color: 'var(--accent)' }} />
             Platforma Xüsusiyyətləri
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-6">
-            Məhsullarınızı AI axtarışa
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent"> hazırlayın</span>
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-6">
+            Məhsullarınızı AI axtarışa <span style={{ color: 'var(--accent)' }}>hazırlayın</span>
           </h1>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ opacity: 0.85 }}>
             Encyclo yalnız ensiklopediya deyil — Azərbaycan şirkətlərinin məhsullarını AI axtarış sistemlərində görünən hala gətirən GEO platformasıdır.
           </p>
         </div>
@@ -79,38 +96,42 @@ export default function FeaturesPage() {
 
       {/* Features Grid */}
       <div className="max-w-6xl mx-auto px-6 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((f) => {
             const Icon = f.icon;
             return (
-              <div key={f.title} className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm hover:shadow-md transition-shadow relative">
-                {f.badge && (
-                  <span className="absolute top-4 right-4 px-2.5 py-1 text-[10px] font-bold bg-indigo-600 text-white rounded-full">
-                    {f.badge}
-                  </span>
-                )}
-                <div className={`h-12 w-12 ${f.bg} rounded-2xl flex items-center justify-center mb-5`}>
-                  <Icon className={`h-6 w-6 ${f.color}`} />
+              <Card key={f.title} className="relative flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-start justify-between mb-5">
+                    <div
+                      className="h-12 w-12 rounded-2xl flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--badge-bg)', color: 'var(--badge-fg)' }}
+                    >
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    {f.badge && (
+                      <Badge tone="accent">
+                        {f.badge}
+                      </Badge>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-lg mb-3">{f.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg mb-3">{f.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-              </div>
+              </Card>
             );
           })}
         </div>
       </div>
 
       {/* CTA */}
-      <div className="bg-indigo-600 py-16">
+      <div style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }} className="py-20">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Başlamağa hazırsınız?</h2>
-          <p className="text-indigo-200 mb-8">Qeydiyyat pulsuzdur. İlk məhsulunuzu 5 dəqiqəyə əlavə edin.</p>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-all active:scale-95"
-          >
+          <h2 className="text-3xl md:text-4xl font-black mb-4">Başlamağa hazırsınız?</h2>
+          <p className="max-w-md mx-auto mb-8 opacity-90 text-sm md:text-base">İndi beta mərhələsindəyik — bütün xüsusiyyətlər aktivdir. İlk məhsulunuzu 5 dəqiqəyə əlavə edin.</p>
+          <CTAButton to="/register" className="bg-white hover:bg-white/90 btn-press animate-bounce" style={{ color: 'var(--accent)' }}>
             Pulsuz başla <ArrowRight className="h-4 w-4" />
-          </Link>
+          </CTAButton>
         </div>
       </div>
     </div>

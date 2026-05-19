@@ -52,7 +52,7 @@ const PLANS = [
 
 export default function BillingPage() {
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+    <div className="max-w-7xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ödənişlər</h1>
         <p className="text-muted-foreground mt-1">Plan seçin və ya mövcud planınızı idarə edin</p>

@@ -245,7 +245,7 @@ export default function ReportsPage() {
                         </td>
                         <td className="py-4 text-right">
                           <Link
-                            href={`/encyclopedia/products/${product.slug}`}
+                            href={`/products/${product.slug}`}
                             target="_blank"
                             className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-xs font-bold"
                           >

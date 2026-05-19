@@ -54,7 +54,7 @@ export default async function WidgetPage(props: { params: Promise<{ slug: string
           return (
             <a
               key={product.id}
-              href={`${siteUrl}/encyclopedia/products/${product.slug}`}
+              href={`${siteUrl}/products/${product.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '1px solid #f3f4f6', textDecoration: 'none', color: 'inherit' }}

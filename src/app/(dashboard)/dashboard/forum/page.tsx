@@ -1,6 +1,7 @@
+// app/(dashboard)/dashboard/forum/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   MessageSquare,
@@ -14,14 +15,8 @@ import {
   Brain,
   Check,
   X,
+  Pencil,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +28,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type { Product, ProductTranslation } from "@/types";
 
 type FAQ = {
@@ -48,8 +42,164 @@ type ProductWithFAQs = Product & {
   faqs: FAQ[];
 };
 
+const inputClass = "h-10 w-full rounded-xl border px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-[var(--accent)] text-[var(--foreground)]";
+const inputStyle: React.CSSProperties = { borderColor: "var(--border)", backgroundColor: "var(--surface)" };
+
+// Card component inline
+function Card({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  return (
+    <div 
+      className={`rounded-2xl border ${className}`}
+      style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)", ...style }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Field component inline
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-xs font-semibold text-[var(--foreground)]">{label}</span>
+        {hint ? <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{hint}</span> : null}
+      </div>
+      {children}
+    </label>
+  );
+}
+
+// PrimaryButton component inline
+function PrimaryButton({ children, className = "", ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...rest}
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      style={{ backgroundColor: "var(--accent)", color: "var(--accent-foreground)" }}>
+      {children}
+    </button>
+  );
+}
+
+// SecondaryButton component inline
+function SecondaryButton({ children, className = "", style, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button {...rest}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border bg-transparent px-4 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      style={{ 
+        borderColor: "var(--border)", 
+        color: "var(--foreground)",
+        backgroundColor: hovered ? "var(--muted)" : "transparent",
+        ...style
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// SmallSecondaryButton component inline
+function SmallSecondaryButton({ children, onClick }: { children: React.ReactNode; onClick: (e: any) => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+      style={{ 
+        border: "1px solid var(--border)", 
+        color: "var(--foreground)",
+        backgroundColor: hovered ? "var(--muted)" : "transparent"
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// IconButton component inline
+function IconButton({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="rounded-md p-1.5 cursor-pointer transition-colors"
+      style={{
+        color: hovered ? "var(--foreground)" : "var(--muted-foreground)",
+        backgroundColor: hovered ? "var(--muted)" : "transparent",
+        border: "none",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// CloseButton component inline
+function CloseButton({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="rounded-lg p-1.5 cursor-pointer transition-colors"
+      style={{
+        color: hovered ? "var(--foreground)" : "var(--muted-foreground)",
+        backgroundColor: hovered ? "var(--muted)" : "transparent",
+        border: "none",
+      }}
+    >
+      <X size={18} />
+    </button>
+  );
+}
+
+// ProductHeaderRow component inline
+function ProductHeaderRow({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      className="flex items-center justify-between p-5 cursor-pointer transition-colors"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        backgroundColor: hovered ? "color-mix(in oklab, var(--muted) 40%, transparent)" : "transparent"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// StatusBadge component inline
+function StatusBadge({ variant, children }: { variant: "active" | "draft" | "warning" | "new"; children: React.ReactNode }) {
+  const palette = {
+    active: { bg: "oklch(0.94 0.06 150)", fg: "oklch(0.4 0.14 150)", dot: "oklch(0.55 0.16 150)" },
+    draft: { bg: "oklch(0.95 0.005 250)", fg: "oklch(0.45 0.02 257)", dot: "oklch(0.6 0.02 257)" },
+    warning: { bg: "oklch(0.95 0.07 80)", fg: "oklch(0.45 0.15 60)", dot: "oklch(0.65 0.16 70)" },
+    new: { bg: "var(--badge-bg)", fg: "var(--badge-fg)", dot: "var(--accent)" },
+  }[variant];
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold select-none"
+      style={{ backgroundColor: palette.bg, color: palette.fg }}>
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: palette.dot }} />
+      {children}
+    </span>
+  );
+}
+
 export default function ForumDashboardPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [products, setProducts] = useState<ProductWithFAQs[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,12 +208,40 @@ export default function ForumDashboardPage() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{faqId: string; productId: string} | null>(null);
 
   // AI FAQ State
   const [aiFAQs, setAiFAQs] = useState<{ question: string; answer: string; selected: boolean }[]>([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+
+  // Questionnaire panel state
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [questionnaireProductId, setQuestionnaireProductId] = useState<string | null>(null);
+
+  // Questionnaire form fields
+  const [topQuestions, setTopQuestions] = useState('');
+  const [mainDifference, setMainDifference] = useState('');
+  const [supportInfo, setSupportInfo] = useState('');
+
+  // Intent choices
+  const [selectedIntents, setSelectedIntents] = useState<string[]>([
+    'what_is', 'pricing', 'how_to', 'comparison', 'trust'
+  ]);
+
+  // FAQ Inline Edit State
+  const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
+  const [editQuestion, setEditQuestion] = useState('');
+  const [editAnswer, setEditAnswer] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+
+  const intents = [
+    { id: "what_is", label: "Nədir / Nə edir", icon: "🔍" },
+    { id: "pricing", label: "Qiymət / Tariflər", icon: "💰" },
+    { id: "how_to", label: "Necə başlamaq", icon: "🚀" },
+    { id: "comparison", label: "Rəqiblərdən fərqi", icon: "⚖️" },
+    { id: "trust", label: "Zəmanət / Dəstək", icon: "🛡️" },
+  ];
 
   useEffect(() => {
     async function init() {
@@ -113,10 +291,14 @@ export default function ForumDashboardPage() {
       setIsLoading(false);
     }
     init();
-  }, []);
+  }, [supabase]);
 
   const handleAddFAQ = async (productId: string) => {
     if (!question.trim() || !answer.trim()) return;
+    if (!question.trim().endsWith('?')) {
+      toast.warning("Sual sona '?' işarəsi ilə bitməlidir");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -149,9 +331,17 @@ export default function ForumDashboardPage() {
       setQuestion("");
       setAnswer("");
       setAddingFAQFor(null);
-      toast.success("FAQ əlavə edildi");
-    } catch (err: any) {
-      toast.error(err.message || "Xəta baş verdi");
+      
+      const savedProduct = products.find(p => p.id === productId);
+      toast.success("FAQ əlavə edildi", {
+        action: savedProduct?.slug ? {
+          label: "Məhsulda bax",
+          onClick: () => window.open(`/products/${savedProduct.slug}`, '_blank')
+        } : undefined
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Xəta baş verdi";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -175,23 +365,106 @@ export default function ForumDashboardPage() {
       );
 
       toast.success("FAQ silindi");
-    } catch (err: any) {
-      toast.error(err.message || "Xəta baş verdi");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Xəta baş verdi";
+      toast.error(message);
     } finally {
-      setDeleteId(null);
+      setDeleteTarget(null);
     }
   };
 
-  const handleGenerateAIFAQ = async (product: ProductWithFAQs) => {
-    const translation = product.translations?.find(t => t.locale === 'az') || product.translations?.[0];
-    const description = translation?.description;
-    const productName = translation?.name || product.slug;
+  const handleEditFAQ = async (faqId: string, productId: string) => {
+    if (!editQuestion.trim() || !editAnswer.trim()) return;
+    if (!editQuestion.trim().endsWith('?')) {
+      toast.warning("Sual sona '?' işarəsi ilə bitməlidir");
+      return;
+    }
+    setIsEditing(true);
 
-    if (!description) {
+    try {
+      const { error } = await supabase
+        .from("forum_posts")
+        .update({
+          question: editQuestion.trim(),
+          content: editAnswer.trim(),
+        })
+        .eq("id", faqId);
+
+      if (error) throw error;
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId
+            ? {
+                ...p,
+                faqs: p.faqs.map((f) =>
+                  f.id === faqId
+                    ? { ...f, question: editQuestion.trim(), content: editAnswer.trim() }
+                    : f
+                ),
+              }
+            : p
+        )
+      );
+
+      setEditingFaqId(null);
+      setEditQuestion('');
+      setEditAnswer('');
+      toast.success("FAQ yeniləndi");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Xəta baş verdi";
+      toast.error(message);
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleGenerateAIFAQ = (product: ProductWithFAQs) => {
+    const translation = product.translations?.find(t => t.locale === 'az') 
+      || product.translations?.[0];
+    
+    if (!translation?.description) {
       toast.warning("FAQ yaratmaq üçün əvvəlcə məhsul təsviri əlavə edin");
       return;
     }
+    
+    setQuestionnaireProductId(product.id);
+    setShowQuestionnaire(true);
+    setTopQuestions('');
+    setMainDifference('');
+    setSupportInfo('');
+    setSelectedIntents(['what_is', 'pricing', 'how_to', 'comparison', 'trust']);
+  };
 
+  const toggleIntent = (id: string) => {
+    setSelectedIntents(prev => 
+      prev.includes(id) 
+        ? prev.length > 1 ? prev.filter(i => i !== id) : prev
+        : [...prev, id]
+    );
+  };
+
+  const handleCloseQuestionnaire = () => {
+    const hasData = topQuestions.trim() || mainDifference.trim() || supportInfo.trim();
+    if (hasData) {
+      const confirmed = window.confirm(
+        'Doldurulmuş məlumatlar silinəcək. Çıxmaq istəyirsiniz?'
+      );
+      if (!confirmed) return;
+    }
+    setShowQuestionnaire(false);
+  };
+
+  const handleSubmitQuestionnaire = async () => {
+    const product = products.find(p => p.id === questionnaireProductId);
+    if (!product) return;
+
+    const translation = product.translations?.find(t => t.locale === 'az') 
+      || product.translations?.[0];
+    const description = translation?.description || '';
+    const productName = translation?.name || product.slug;
+
+    setShowQuestionnaire(false);
     setGeneratingFor(product.id);
     setExpandedProduct(product.id);
     setIsGeneratingAI(true);
@@ -201,7 +474,14 @@ export default function ForumDashboardPage() {
       const response = await fetch("/api/ai-faq", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description, productName }),
+        body: JSON.stringify({
+          description,
+          productName,
+          topQuestions: topQuestions.trim(),
+          mainDifference: mainDifference.trim(),
+          supportInfo: supportInfo.trim(),
+          selectedIntents,
+        }),
       });
 
       if (!response.ok) {
@@ -210,9 +490,12 @@ export default function ForumDashboardPage() {
       }
 
       const { faqs } = await response.json();
-      setAiFAQs(faqs.map((f: any) => ({ ...f, selected: true })));
-    } catch (err: any) {
-      toast.error(err.message || "FAQ yaradarkən xəta baş verdi");
+      setAiFAQs(faqs.map((f: { question: string; answer: string }) => ({ 
+        ...f, selected: true 
+      })));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "FAQ yaradarkən xəta baş verdi";
+      toast.error(message);
       setGeneratingFor(null);
     } finally {
       setIsGeneratingAI(false);
@@ -251,9 +534,17 @@ export default function ForumDashboardPage() {
 
       setAiFAQs([]);
       setGeneratingFor(null);
-      toast.success(`${selected.length} FAQ yadda saxlanıldı`);
-    } catch (err: any) {
-      toast.error(err.message || "Xəta baş verdi");
+      
+      const savedProduct = products.find(p => p.id === productId);
+      toast.success(`${selected.length} FAQ yadda saxlanıldı`, {
+        action: savedProduct?.slug ? {
+          label: "Məhsulda bax",
+          onClick: () => window.open(`/products/${savedProduct.slug}`, '_blank')
+        } : undefined
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Xəta baş verdi";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -265,13 +556,14 @@ export default function ForumDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 animate-pulse">
+      <div className="space-y-5 animate-pulse">
+        {/* Header */}
         <div className="space-y-2">
-          <div className="h-8 w-32 bg-gray-200 rounded-xl" />
-          <div className="h-4 w-64 bg-gray-100 rounded-xl" />
+          <div className="h-7 w-48 bg-gray-200 rounded-xl" />
+          <div className="h-4 w-96 bg-gray-100 rounded-xl" />
         </div>
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+          <div key={i} className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
             <div className="flex items-center justify-between">
               <div className="h-5 w-48 bg-gray-200 rounded-lg" />
               <div className="h-8 w-24 bg-gray-100 rounded-xl" />
@@ -284,331 +576,483 @@ export default function ForumDashboardPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+    <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Forum & FAQ</h1>
-        <p className="text-muted-foreground mt-1">
+        <h2 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Forum & FAQ</h2>
+        <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
           Məhsullarınıza tez-tez verilən sualları əlavə edin — AI axtarışda görünsün
         </p>
       </div>
 
-      {/* Info card */}
-      <Card className="rounded-2xl border-indigo-100 bg-indigo-50/50 shadow-none">
-        <CardContent className="p-4 flex items-start gap-3">
-          <HelpCircle className="h-5 w-5 text-indigo-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-indigo-700 leading-relaxed">
-            FAQ-lar məhsul səhifəsində göstərilir və <strong>FAQPage JSON-LD</strong> ilə işarələnir.
-            ChatGPT, Perplexity kimi AI axtarışlarda sual-cavab formatında birbaşa görünür.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Info banner */}
+      <div className="rounded-2xl border p-4 flex items-start gap-3"
+        style={{
+          borderColor: "color-mix(in oklab, var(--accent) 25%, transparent)",
+          backgroundColor: "color-mix(in oklab, var(--accent) 6%, transparent)",
+        }}>
+        <HelpCircle size={16} style={{ color: "var(--accent)" }} className="flex-shrink-0 mt-0.5" />
+        <p className="text-sm leading-relaxed text-[var(--accent)]">
+          FAQ-lar <strong>FAQPage JSON-LD</strong> ilə işarələnir.
+          ChatGPT, Perplexity kimi AI axtarışlarda birbaşa görünür.{" "}
+          <span className="font-bold">Hər məhsulda minimum 5 FAQ tövsiyə olunur.</span>
+        </p>
+      </div>
 
       {/* Empty state */}
       {products.length === 0 && (
-        <Card className="rounded-2xl border-dashed border-2 border-gray-200 shadow-none">
-          <CardContent className="py-16 flex flex-col items-center text-center space-y-4">
-            <div className="h-16 w-16 bg-gray-50 rounded-2xl flex items-center justify-center">
-              <MessageSquare className="h-8 w-8 text-gray-300" />
-            </div>
-            <div className="space-y-1">
-              <p className="font-bold text-gray-900">Hələ məhsul əlavə etməmisiniz</p>
-              <p className="text-sm text-gray-500">FAQ əlavə etmək üçün əvvəlcə məhsul yaradın</p>
-            </div>
-            <a
-              href="/dashboard/add-content"
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
-            >
-              <Plus className="h-4 w-4" />
+        <Card className="border-dashed border-2 py-16 flex flex-col items-center text-center space-y-4">
+          <div className="h-16 w-16 bg-gray-50 rounded-2xl flex items-center justify-center dark:bg-white/5">
+            <MessageSquare className="h-8 w-8 text-gray-300" />
+          </div>
+          <div className="space-y-1">
+            <p className="font-bold text-gray-900 dark:text-gray-100">Hələ məhsul əlavə etməmisiniz</p>
+            <p className="text-sm text-gray-500">FAQ əlavə etmək üçün əvvəlcə məhsul yaradın</p>
+          </div>
+          <a href="/dashboard/add-content">
+            <PrimaryButton type="button" className="px-5 py-2.5">
+              <Plus size={16} />
               Məhsul əlavə et
-            </a>
-          </CardContent>
+            </PrimaryButton>
+          </a>
         </Card>
       )}
 
-      {/* Products with FAQs */}
-      {products.map((product) => {
-        const name = product.translations?.[0]?.name || product.slug;
-        const isExpanded = expandedProduct === product.id;
-        const isAddingFAQ = addingFAQFor === product.id;
+      {/* Products list */}
+      <div className="space-y-3">
+        {products.map((product) => {
+          const name = product.translations?.[0]?.name || product.slug;
+          const isExpanded = expandedProduct === product.id;
+          const isAddingFAQ = addingFAQFor === product.id;
+          const isGenerating = generatingFor === product.id;
 
-        return (
-          <Card key={product.id} className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
-            {/* Product header */}
-            <div
-              className="flex items-center justify-between p-5 cursor-pointer hover:bg-gray-50/50 transition-colors"
-              onClick={() => setExpandedProduct(isExpanded ? null : product.id)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
-                  {product.images?.[0] ? (
-                    <img src={product.images[0]} className="w-full h-full object-cover" alt={name} />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">📦</div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">{name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Badge
-                      className={cn(
-                        "text-[10px] border-none",
-                        product.status === "active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
-                      )}
-                    >
-                      {product.status === "active" ? "Aktiv" : "Qaralama"}
-                    </Badge>
-                    <span className="text-xs text-gray-400">
-                      {product.faqs.length} FAQ
-                    </span>
+          const initials = name
+            .split(" ")
+            .slice(0, 2)
+            .map((w: string) => w[0])
+            .join("")
+            .toUpperCase();
+
+          return (
+            <Card key={product.id}>
+              {/* Product header row */}
+              <ProductHeaderRow onClick={() => setExpandedProduct(isExpanded ? null : product.id)}>
+                <div className="flex items-center gap-3">
+                  {/* Avatar */}
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold overflow-hidden"
+                    style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-fg)" }}>
+                    {product.images?.[0] ? (
+                      <img src={product.images[0]} className="w-full h-full object-cover" alt={name} />
+                    ) : (
+                      <span>{initials || "PR"}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--foreground)]">{name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <StatusBadge variant={product.status === "active" ? "active" : "draft"}>
+                        {product.status === "active" ? "Aktiv" : "Qaralama"}
+                      </StatusBadge>
+                      <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                        {product.faqs.length} FAQ
+                      </span>
+                      {product.faqs.length >= 5 ? (
+                        <StatusBadge variant="active">✓ Tam əhatəli</StatusBadge>
+                      ) : product.faqs.length > 0 ? (
+                        <StatusBadge variant="warning">{5 - product.faqs.length} FAQ əksikdir</StatusBadge>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGenerateAIFAQ(product);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  AI ilə FAQ yarat
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setAddingFAQFor(isAddingFAQ ? null : product.id);
-                    setExpandedProduct(product.id);
-                    setQuestion("");
-                    setAnswer("");
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  FAQ əlavə et
-                </button>
-                {isExpanded ? (
-                  <ChevronUp className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
-                )}
-              </div>
-            </div>
 
-            {/* Expanded content */}
-            {isExpanded && (
-              <div className="border-t border-gray-100">
-                {/* AI Generation Panel */}
-                {generatingFor === product.id && (
-                  <div className="p-5 bg-purple-50/30 border-b border-purple-100/50 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Brain className="h-4 w-4 text-purple-600" />
-                        </div>
-                        <p className="text-sm font-bold text-purple-900">AI FAQ Generasiyası</p>
-                      </div>
-                      {!isGeneratingAI && aiFAQs.length > 0 && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => toggleAllFAQs(true)}
-                            className="text-[10px] font-bold text-purple-600 uppercase tracking-tight hover:underline"
-                          >
-                            Hamısını seç
-                          </button>
-                          <span className="text-gray-300">|</span>
-                          <button
-                            onClick={() => toggleAllFAQs(false)}
-                            className="text-[10px] font-bold text-gray-400 uppercase tracking-tight hover:underline"
-                          >
-                            Heç birini seçmə
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                {/* Action buttons */}
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => handleGenerateAIFAQ(product)}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+                    style={{ backgroundColor: "color-mix(in oklab, var(--accent) 12%, transparent)", color: "var(--accent)", border: "none" }}>
+                    <Sparkles size={13} />AI ilə FAQ yarat
+                  </button>
+                  <SmallSecondaryButton
+                    onClick={() => { 
+                      setAddingFAQFor(isAddingFAQ ? null : product.id); 
+                      setExpandedProduct(product.id); 
+                      setQuestion(""); 
+                      setAnswer(""); 
+                    }}
+                  >
+                    <Plus size={13} />FAQ əlavə et
+                  </SmallSecondaryButton>
+                  {isExpanded ? (
+                    <ChevronUp size={16} style={{ color: "var(--muted-foreground)" }} />
+                  ) : (
+                    <ChevronDown size={16} style={{ color: "var(--muted-foreground)" }} />
+                  )}
+                </div>
+              </ProductHeaderRow>
 
-                    {isGeneratingAI ? (
-                      <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                        <Loader2 className="h-8 w-8 text-purple-400 animate-spin" />
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-purple-900">FAQ-lar hazırlanır...</p>
-                          <p className="text-xs text-purple-500">Məhsul təsviri analiz edilir və 5 sual yaradılır</p>
+              {/* Expanded content */}
+              {isExpanded && (
+                <div className="border-t" style={{ borderColor: "var(--border)" }}>
+
+                  {/* AI Generation panel */}
+                  {isGenerating && (
+                    <div className="p-5 border-b space-y-4" style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "color-mix(in oklab, var(--accent) 4%, transparent)",
+                    }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg"
+                            style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-fg)" }}>
+                            <Brain size={15} />
+                          </div>
+                          <p className="text-[13px] font-bold text-[var(--foreground)]">AI FAQ Generasiyası</p>
                         </div>
+                        {!isGeneratingAI && aiFAQs.length > 0 && (
+                          <div className="flex gap-3">
+                            <button className="text-[10px] font-bold uppercase tracking-tight cursor-pointer"
+                              style={{ color: "var(--accent)", border: "none", background: "none" }}
+                              onClick={() => toggleAllFAQs(true)}>
+                              Hamısını seç
+                            </button>
+                            <button className="text-[10px] font-bold uppercase tracking-tight cursor-pointer"
+                              style={{ color: "var(--muted-foreground)", border: "none", background: "none" }}
+                              onClick={() => toggleAllFAQs(false)}>
+                              Heç birini seçmə
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="grid gap-3">
+
+                      {isGeneratingAI ? (
+                        <div className="py-10 flex flex-col items-center gap-3">
+                          <Loader2 size={28} className="animate-spin" style={{ color: "var(--accent)" }} />
+                          <p className="text-sm font-medium text-[var(--foreground)]">FAQ-lar hazırlanır...</p>
+                          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Məhsul təsviri analiz edilir</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
                           {aiFAQs.map((faq, idx) => (
-                            <div 
-                              key={idx}
-                              onClick={() => {
-                                setAiFAQs(prev => prev.map((f, i) => i === idx ? { ...f, selected: !f.selected } : f));
-                              }}
-                              className={cn(
-                                "p-4 rounded-xl border transition-all cursor-pointer flex gap-3",
-                                faq.selected 
-                                  ? "bg-white border-purple-200 shadow-sm ring-1 ring-purple-100" 
-                                  : "bg-gray-50/50 border-gray-100 opacity-60 hover:opacity-100"
-                              )}
-                            >
-                              <div className={cn(
-                                "h-5 w-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors",
-                                faq.selected ? "bg-purple-600 border-purple-600" : "bg-white border-gray-300"
-                              )}>
-                                {faq.selected && <Check className="h-3 w-3 text-white" />}
+                            <div key={idx}
+                              onClick={() => setAiFAQs(prev => prev.map((f, i) => i === idx ? { ...f, selected: !f.selected } : f))}
+                              className="flex gap-3 rounded-xl border p-4 cursor-pointer transition-all"
+                              style={{
+                                borderColor: faq.selected ? "color-mix(in oklab, var(--accent) 40%, transparent)" : "var(--border)",
+                                backgroundColor: faq.selected ? "color-mix(in oklab, var(--accent) 6%, transparent)" : "transparent",
+                                opacity: faq.selected ? 1 : 0.6,
+                              }}>
+                              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition-colors"
+                                style={{
+                                  backgroundColor: faq.selected ? "var(--accent)" : "transparent",
+                                  borderColor: faq.selected ? "var(--accent)" : "var(--border)",
+                                }}>
+                                {faq.selected && <Check size={11} style={{ color: "var(--accent-foreground)" }} />}
                               </div>
-                              <div className="space-y-1.5 min-w-0">
-                                <p className="text-xs font-black text-gray-900 leading-tight">{faq.question}</p>
-                                <p className="text-xs text-gray-500 leading-relaxed">{faq.answer}</p>
+                              <div className="space-y-1 min-w-0">
+                                <p className="text-xs font-bold text-[var(--foreground)]">{faq.question}</p>
+                                <p className="text-xs leading-relaxed" style={{ color: "var(--muted-foreground)" }}>{faq.answer}</p>
                               </div>
                             </div>
                           ))}
+                          <div className="flex gap-2 justify-end pt-2">
+                            <SecondaryButton onClick={() => { setGeneratingFor(null); setAiFAQs([]); }}>
+                              Ləğv et
+                            </SecondaryButton>
+                            <PrimaryButton 
+                              disabled={aiFAQs.filter(f => f.selected).length === 0 || isSubmitting}
+                              onClick={() => handleSaveSelectedFAQs(product.id)}
+                            >
+                              {isSubmitting ? (
+                                <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saxlanılır...</>
+                              ) : (
+                                `Seçilənləri saxla (${aiFAQs.filter(f => f.selected).length})`
+                              )}
+                            </PrimaryButton>
+                          </div>
                         </div>
+                      )}
+                    </div>
+                  )}
 
-                        <div className="flex gap-2 justify-end pt-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-xl text-xs"
-                            onClick={() => {
-                              setGeneratingFor(null);
-                              setAiFAQs([]);
-                            }}
-                          >
-                            Ləğv et
-                          </Button>
-                          <Button
-                            size="sm"
-                            disabled={aiFAQs.filter(f => f.selected).length === 0 || isSubmitting}
-                            onClick={() => handleSaveSelectedFAQs(product.id)}
-                            className="bg-purple-600 hover:bg-purple-700 rounded-xl text-xs px-6"
-                          >
-                            {isSubmitting ? (
-                              <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Saxlanılır...</>
-                            ) : (
-                              `Seçilənləri saxla (${aiFAQs.filter(f => f.selected).length})`
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {/* Add FAQ form */}
-                {isAddingFAQ && (
-                  <div className="p-5 bg-indigo-50/30 border-b border-indigo-100/50 space-y-4">
-                    <p className="text-sm font-semibold text-gray-700">Yeni FAQ</p>
-                    <div className="space-y-2">
-                      <Label className="text-xs text-gray-600">Sual</Label>
-                      <Input
-                        value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
-                        placeholder="məs: Bu məhsulun qiyməti nədir?"
-                        className="h-10 text-sm rounded-xl"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs text-gray-600">Cavab</Label>
-                      <Textarea
-                        value={answer}
-                        onChange={(e) => setAnswer(e.target.value)}
-                        placeholder="Sualın ətraflı cavabını yazın..."
-                        rows={3}
-                        className="text-sm rounded-xl resize-none"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-xl"
-                        onClick={() => {
-                          setAddingFAQFor(null);
-                          setQuestion("");
-                          setAnswer("");
-                        }}
+                  {/* Add FAQ form */}
+                  {isAddingFAQ && (
+                    <div className="p-5 border-b space-y-4"
+                      style={{
+                        borderColor: "var(--border)",
+                        backgroundColor: "color-mix(in oklab, var(--accent) 4%, transparent)",
+                      }}>
+                      <p className="text-[13px] font-bold text-[var(--foreground)]">Yeni FAQ</p>
+                      
+                      <Field label="Sual">
+                        <input 
+                          value={question} 
+                          onChange={(e) => setQuestion(e.target.value)} 
+                          placeholder="məs: Bu məhsulun qiyməti nədir?" 
+                          className={inputClass} 
+                          style={inputStyle} 
+                        />
+                      </Field>
+                      
+                      <Field 
+                        label="Cavab" 
+                        hint={`${answer.trim().split(/\s+/).filter(Boolean).length} söz · min 40 söz tövsiyə olunur`}
                       >
-                        Ləğv et
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={!question.trim() || !answer.trim() || isSubmitting}
-                        onClick={() => handleAddFAQ(product.id)}
-                        className="bg-indigo-600 hover:bg-indigo-500 rounded-xl"
-                      >
-                        {isSubmitting ? (
-                          <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Əlavə edilir...</>
-                        ) : (
-                          "Əlavə et"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* FAQ list */}
-                {product.faqs.length === 0 ? (
-                  <div className="py-10 text-center text-sm text-gray-400">
-                    Bu məhsul üçün hələ FAQ yoxdur
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {product.faqs.map((faq) => (
-                      <div key={faq.id} className="p-5 flex gap-4 items-start group">
-                        <div className="flex-1 space-y-1.5 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">
-                            Q: {faq.question}
-                          </p>
-                          <p className="text-sm text-gray-500 leading-relaxed">
-                            A: {faq.content}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteId(faq.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                        <textarea 
+                          rows={3} 
+                          value={answer} 
+                          onChange={(e) => setAnswer(e.target.value)} 
+                          placeholder="Sualın ətraflı cavabını yazın..."
+                          className="w-full rounded-xl border p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] text-[var(--foreground)]" 
+                          style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }} 
+                        />
+                      </Field>
+                      
+                      <div className="flex gap-2 justify-end">
+                        <SecondaryButton onClick={() => { setAddingFAQFor(null); setQuestion(""); setAnswer(""); }}>
+                          Ləğv et
+                        </SecondaryButton>
+                        <PrimaryButton 
+                          disabled={!question.trim() || !answer.trim() || isSubmitting} 
+                          onClick={() => handleAddFAQ(product.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                          {isSubmitting ? (
+                            <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Əlavə edilir...</>
+                          ) : (
+                            "Əlavə et"
+                          )}
+                        </PrimaryButton>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                    </div>
+                  )}
 
-            {/* Delete dialog — outside map iteration context */}
-            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-              <AlertDialogContent className="rounded-2xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>FAQ-ı silmək istəyirsiniz?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Bu əməliyyat geri alına bilməz. FAQ məhsul səhifəsindən silinəcək.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-xl">Ləğv et</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      if (deleteId) handleDeleteFAQ(deleteId, product.id);
-                    }}
-                    className="bg-red-600 hover:bg-red-500 rounded-xl"
-                  >
-                    Sil
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </Card>
-        );
-      })}
+                  {/* FAQ list */}
+                  {product.faqs.length === 0 && !isAddingFAQ && !isGenerating ? (
+                    <div className="p-10 flex flex-col items-center gap-4 text-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                        style={{ backgroundColor: "var(--muted)" }}>
+                        <MessageSquare size={20} style={{ color: "var(--muted-foreground)" }} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--foreground)]">Hələ FAQ yoxdur</p>
+                        <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>AI ilə avtomatik yarat və ya özünüz əlavə edin</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleGenerateAIFAQ(product)}
+                          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer"
+                          style={{ backgroundColor: "color-mix(in oklab, var(--accent) 12%, transparent)", color: "var(--accent)", border: "none" }}>
+                          <Sparkles size={13} />AI ilə yarat
+                        </button>
+                        <SmallSecondaryButton
+                          onClick={() => { setAddingFAQFor(product.id); setQuestion(""); setAnswer(""); }}
+                        >
+                          <Plus size={13} />Özünüz əlavə edin
+                        </SmallSecondaryButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <ul>
+                      {product.faqs.map((faq, i) => (
+                        <li key={faq.id}
+                          className={`group p-5 ${i !== product.faqs.length - 1 ? "border-b" : ""}`}
+                          style={{ borderColor: "var(--border)" }}>
+                          {editingFaqId === faq.id ? (
+                            // Edit mode
+                            <div className="space-y-3">
+                              <Field label="Sual">
+                                <input 
+                                  value={editQuestion} 
+                                  onChange={(e) => setEditQuestion(e.target.value)} 
+                                  className={inputClass} 
+                                  style={inputStyle} 
+                                />
+                              </Field>
+                              
+                              <Field 
+                                label="Cavab"
+                                hint={`${editAnswer.trim().split(/\s+/).filter(Boolean).length} söz · min 40 söz tövsiyə olunur`}
+                              >
+                                <textarea 
+                                  rows={3} 
+                                  value={editAnswer} 
+                                  onChange={(e) => setEditAnswer(e.target.value)}
+                                  className="w-full rounded-xl border p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] text-[var(--foreground)]" 
+                                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }} 
+                                />
+                              </Field>
+                              
+                              <div className="flex gap-2 justify-end">
+                                <SecondaryButton onClick={() => { setEditingFaqId(null); setEditQuestion(""); setEditAnswer(""); }}>
+                                  Ləğv et
+                                </SecondaryButton>
+                                <PrimaryButton 
+                                  disabled={!editQuestion.trim() || !editAnswer.trim() || isEditing}
+                                  onClick={() => handleEditFAQ(faq.id, product.id)}
+                                >
+                                  {isEditing ? (
+                                    <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saxlanılır...</>
+                                  ) : (
+                                    "Yadda saxla"
+                                  )}
+                                </PrimaryButton>
+                              </div>
+                            </div>
+                          ) : (
+                            // View mode
+                            <div className="flex gap-4 items-start">
+                              <div className="flex-1 space-y-1.5 min-w-0">
+                                <p className="text-sm font-semibold text-[var(--foreground)]">{faq.question}</p>
+                                <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>{faq.content}</p>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 flex-shrink-0">
+                                <IconButton
+                                  onClick={() => {
+                                    setEditingFaqId(faq.id);
+                                    setEditQuestion(faq.question);
+                                    setEditAnswer(faq.content);
+                                  }}
+                                >
+                                  <Pencil size={14} />
+                                </IconButton>
+                                <IconButton
+                                  onClick={() => setDeleteTarget({ faqId: faq.id, productId: product.id })}
+                                >
+                                  <Trash2 size={14} />
+                                </IconButton>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Delete Confirmation Alert Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>FAQ-ı silmək istəyirsiniz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu əməliyyat geri alına bilməz. FAQ məhsul səhifəsindən silinəcək.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Ləğv et</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) handleDeleteFAQ(deleteTarget.faqId, deleteTarget.productId);
+              }}
+              className="bg-red-600 hover:bg-red-500 rounded-xl"
+            >
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AI FAQ Questionnaire Modal */}
+      {showQuestionnaire && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          onClick={handleCloseQuestionnaire}>
+          <div className="w-full max-w-lg rounded-2xl border p-6 space-y-5 shadow-xl relative"
+            style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+            onClick={(e) => e.stopPropagation()}>
+
+            {/* Modal header */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-fg)" }}>
+                  <Brain size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[var(--foreground)]">AI FAQ Sehrbazı</h3>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--muted-foreground)" }}>Daha keyfiyyətli FAQ üçün bir neçə sual</p>
+                </div>
+              </div>
+              <CloseButton onClick={handleCloseQuestionnaire} />
+            </div>
+
+            {/* Questions */}
+            <div className="space-y-4">
+              <Field label="Müştəriləriniz ən çox nə soruşur?">
+                <textarea 
+                  rows={2} 
+                  value={topQuestions}
+                  onChange={(e) => setTopQuestions(e.target.value)}
+                  placeholder="məs: qiymət, inteqrasiya, texniki dəstək..."
+                  className="w-full rounded-xl border p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] text-[var(--foreground)]" 
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }} 
+                />
+              </Field>
+              
+              <Field label="Rəqiblərdən əsas fərqiniz nədir?">
+                <textarea 
+                  rows={2} 
+                  value={mainDifference}
+                  onChange={(e) => setMainDifference(e.target.value)}
+                  placeholder="məs: 24/7 dəstək, Azərbaycan vergi sisteminə uyğun..."
+                  className="w-full rounded-xl border p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] text-[var(--foreground)]" 
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }} 
+                />
+              </Field>
+              
+              <Field label="Dəstək və zəmanət məlumatı">
+                <textarea 
+                  rows={2} 
+                  value={supportInfo}
+                  onChange={(e) => setSupportInfo(e.target.value)}
+                  placeholder="məs: 30 günlük pulsuz sınaq, WhatsApp dəstəyi..."
+                  className="w-full rounded-xl border p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] text-[var(--foreground)]" 
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }} 
+                />
+              </Field>
+            </div>
+
+            {/* Intent selection */}
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-[var(--foreground)]">Hansı tip suallar yaradılsın?</p>
+              <div className="flex flex-wrap gap-2">
+                {intents.map((intent) => {
+                  const isSelected = selectedIntents.includes(intent.id);
+                  return (
+                    <button 
+                      key={intent.id}
+                      type="button"
+                      onClick={() => toggleIntent(intent.id)}
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border cursor-pointer"
+                      style={isSelected
+                        ? { backgroundColor: "var(--accent)", color: "var(--accent-foreground)", borderColor: "var(--accent)" }
+                        : { borderColor: "var(--border)", color: "var(--muted-foreground)" }}>
+                      <span>{intent.icon}</span>
+                      <span>{intent.label}</span>
+                      {isSelected && <Check size={11} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal footer */}
+            <div className="flex gap-3 justify-end pt-2 border-t" style={{ borderColor: "var(--border)" }}>
+              <SecondaryButton onClick={handleCloseQuestionnaire}>Ləğv et</SecondaryButton>
+              <PrimaryButton 
+                disabled={selectedIntents.length < 1} 
+                onClick={handleSubmitQuestionnaire}
+              >
+                <Sparkles size={14} /> FAQ Yarat
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

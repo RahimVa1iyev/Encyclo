@@ -1,60 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
-  }
+/* SLATE — default */
+:root,
+:root[data-theme="slate"] {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --surface: #FFFFFF;
+  --border: #E2E8F0;
+  --accent: #10B981;
+  --accent-hover: #059669;
+  --accent-foreground: #FFFFFF;
+  --nav-bg: #0F172A;
+  --nav-fg: #FFFFFF;
+  --hero-bg: #0F172A;
+  --hero-fg: #FFFFFF;
+  --badge-bg: #ECFDF5;
+  --badge-fg: #065F46;
+}
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
+:root[data-theme="indigo"] {
+  --background: #F5F7FF;
+  --foreground: #1E1B4B;
+  --muted: #EEF2FF;
+  --muted-foreground: #6366F1;
+  --surface: #FFFFFF;
+  --border: #E0E7FF;
+  --accent: #4F46E5;
+  --accent-hover: #4338CA;
+  --accent-foreground: #FFFFFF;
+  --nav-bg: #4F46E5;
+  --nav-fg: #FFFFFF;
+  --hero-bg: #4F46E5;
+  --hero-fg: #FFFFFF;
+  --badge-bg: #EEF2FF;
+  --badge-fg: #4338CA;
+}
+
+:root[data-theme="ocean"] {
+  --background: #F0F9FF;
+  --foreground: #1E3A8A;
+  --muted: #E0F2FE;
+  --muted-foreground: #3B82F6;
+  --surface: #FFFFFF;
+  --border: #DBEAFE;
+  --accent: #1D4ED8;
+  --accent-hover: #1E40AF;
+  --accent-foreground: #FFFFFF;
+  --nav-bg: #1E3A8A;
+  --nav-fg: #FFFFFF;
+  --hero-bg: #1E3A8A;
+  --hero-fg: #FFFFFF;
+  --badge-bg: #FEF3C7;
+  --badge-fg: #92400E;
+}
+
+:root[data-theme="forest"] {
+  --background: #F0FDF4;
+  --foreground: #14532D;
+  --muted: #DCFCE7;
+  --muted-foreground: #16A34A;
+  --surface: #FFFFFF;
+  --border: #BBF7D0;
+  --accent: #16A34A;
+  --accent-hover: #15803D;
+  --accent-foreground: #FFFFFF;
+  --nav-bg: #14532D;
+  --nav-fg: #FDE68A;
+  --hero-bg: #14532D;
+  --hero-fg: #FDE68A;
+  --badge-bg: #FEF9C3;
+  --badge-fg: #713F12;
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--border);
+    box-sizing: border-box;
   }
-
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
+}
+
+@layer utilities {
+  .card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -12px color-mix(in oklab, var(--accent) 35%, transparent);
+    border-color: var(--accent);
+  }
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+  .bg-surface { background-color: var(--surface); }
+  .bg-muted { background-color: var(--muted); }
+  .text-muted-foreground { color: var(--muted-foreground); }
+  .border-border { border-color: var(--border); }
+  .text-accent { color: var(--accent); }
+  .hover\:border-accent:hover { border-color: var(--accent); }
+  .hover\:text-accent:hover { color: var(--accent); }
+  .focus\:border-accent:focus { border-color: var(--accent); }
 }

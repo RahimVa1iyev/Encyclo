@@ -1,12 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface AIFaqRequest {
+  description: string;
+  productName: string;
+  topQuestions?: string;
+  mainDifference?: string;
+  supportInfo?: string;
+  selectedIntents?: string[];
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { description, productName } = await request.json();
+    const { 
+      description, 
+      productName,
+      topQuestions,
+      mainDifference,
+      supportInfo,
+      selectedIntents
+    } = await request.json() as AIFaqRequest;
 
     if (!description) {
       return NextResponse.json({ error: 'Məhsul təsviri tələb olunur' }, { status: 400 });
     }
+
+    if (!productName) {
+      return NextResponse.json({ error: 'Məhsul adı tələb olunur' }, { status: 400 });
+    }
+
+    const cleanProductName = productName
+      ? productName.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+      : 'Bu məhsul';
+
+    const intents = selectedIntents && selectedIntents.length > 0 
+      ? selectedIntents 
+      : ['what_is', 'pricing', 'how_to', 'comparison', 'trust'];
+
+    const intentCount = intents.length;
+
+    const intentMap: Record<string, string> = {
+      what_is:    'WHAT_IS intent: Məhsulun nə olduğunu və nə işə yaradığını soruşan sual',
+      pricing:    'PRICING intent: Qiymət, tarif, ödəniş üsulları haqqında sual',
+      how_to:     'HOW_TO intent: İstifadə qaydası, qeydiyyat, başlama prosesi haqqında sual',
+      comparison: 'COMPARISON intent: Rəqiblərdən, alternativlərdən fərqini soruşan sual',
+      trust:      'TRUST intent: Zəmanət, texniki dəstək, etibarlılıq haqqında sual',
+    };
+
+    const intentInstructions = intents
+      .map((id, idx) => `${idx + 1}. ${intentMap[id] || id}`)
+      .join('\n');
+
+    const extraContext = [
+      topQuestions?.trim() 
+        ? `MÜŞTƏRİ SUALLAR (real müştərilərin tez-tez soruşduğu mövzular): ${topQuestions}` 
+        : null,
+      mainDifference?.trim() 
+        ? `RƏQİBLƏRDƏN FƏRQ (şirkətin öz ifadəsi ilə): ${mainDifference}` 
+        : null,
+      supportInfo?.trim() 
+        ? `DƏSTƏK VƏ ZƏMANƏT MƏLUMATI: ${supportInfo}` 
+        : null,
+    ].filter(Boolean).join('\n\n').trim();
 
     const response = await fetch(
       'https://api.groq.com/openai/v1/chat/completions',
@@ -18,16 +72,44 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          max_tokens: 2000,
-          response_format: { type: "json_object" },
+          max_tokens: Math.min(500 * intentCount, 3000),
           messages: [
             {
               role: "system",
-              content: "Sen FAQ generasiya ekspertisən. Məhsul təsvirinə əsasən ChatGPT və Perplexity kimi AI axtarış sistemlərinin cavab verəcəyi suallar yarat. Yalnız JSON formatında cavab ver, heç bir izahat yazma."
+              content: `Sen Azərbaycan bazarı üçün ixtisaslaşmış SEO/GEO ekspert copywriter-sən.
+Sənin vəzifən: şirkətin verdiyi məlumatlara əsasən, ChatGPT və Perplexity kimi
+AI axtarış sistemlərinin istifadəçilərə cavab verəcəyi FAQ-lar yaratmaqdır.
+
+GEO prinsipləri:
+- Hər sualda məhsul adı bir dəfə keçməlidir (entity recognition üçün)
+- Cavablar birbaşa, faktlara əsaslı olmalıdır
+- Azərbaycan vergi sistemi, Azərbaycan bazarı kontekstini nəzərə al
+
+ÇIXIŞ FORMATI — yalnız bu format, başqa heç nə yazma:
+${Array.from({length: intentCount}, (_, i) => 
+  `QUESTION_${i+1}: sual\nANSWER_${i+1}: cavab`
+).join('\n\n')}`
             },
             {
               role: "user",
-              content: `Bu məhsul üçün 5 FAQ yarat: ${productName}\n\nTəsvir: ${description}\n\nJSON formatı:\n{"faqs": [{"question": "sual?", "answer": "cavab."}]}`
+              content: `Məhsul adı: ${cleanProductName}
+Məhsul təsviri: ${description}
+${extraContext ? '\nƏLAVƏ MƏLUMATLAR (bunları mütləq istifadə et):\n' + extraContext : ''}
+
+Bu məhsul üçün DƏQIQ ${intentCount} FAQ yarat.
+Hər sual fərqli intent kateqoriyasına aid olmalıdır:
+
+${intentInstructions}
+
+QAYDALAR — bunları pozma:
+- Hər sualda "${cleanProductName}" adı bir dəfə keçməlidir
+- Sual uzunluğu: 8-15 söz
+- Cavab uzunluğu: 40-80 söz (nə az, nə çox)
+- Cavab birbaşa başlamalıdır — "Bəli", "Xeyr", konkret fakt ilə
+- Dil: saf Azərbaycan türkcəsi, rəsmi üslub
+- Sual sonunda "?" işarəsi olmalıdır
+- "Bizimlə əlaqə saxlayın" kimi boş CTA-lar yasaqdır
+- ƏLAVƏ MƏLUMATLAR varsa, onları FAQ cavablarına inteqrasiya et`
             }
           ]
         })
@@ -41,16 +123,40 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     const content = data.choices[0].message.content;
+    const faqs: { question: string; answer: string }[] = [];
 
-    try {
-      const parsed = JSON.parse(content);
-      return NextResponse.json({ faqs: parsed.faqs || [] });
-    } catch (parseError) {
-      console.error('JSON parse error:', content);
-      return NextResponse.json({ error: 'AI tərəfindən qaytarılan JSON formatı yanlışdır' }, { status: 500 });
+    for (let i = 1; i <= intentCount; i++) {
+      const fullText = i < intentCount ? content : content + '\n~~~END~~~';
+      const nextMarker = i < intentCount ? `QUESTION_${i + 1}:` : '~~~END~~~';
+
+      const questionMatch = fullText.match(
+        new RegExp(`QUESTION_${i}:\\s*(.+?)(?=ANSWER_${i}:)`, 's')
+      );
+      const answerMatch = fullText.match(
+        new RegExp(`ANSWER_${i}:\\s*(.+?)(?=${nextMarker})`, 's')
+      );
+
+      if (questionMatch && answerMatch) {
+        const question = questionMatch[1].trim().replace(/\n+/g, ' ');
+        const answer = answerMatch[1].trim().replace(/\n{3,}/g, '\n\n');
+
+        if (question.length > 10 && answer.length > 20) {
+          faqs.push({ question, answer });
+        }
+      }
     }
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Daxili server xətası' }, { status: 500 });
+    if (faqs.length === 0) {
+      return NextResponse.json(
+        { error: 'FAQ generasiyası uğursuz oldu, yenidən cəhd edin' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ faqs });
+
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Daxili server xətası';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

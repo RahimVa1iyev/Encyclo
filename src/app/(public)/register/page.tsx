@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { cn, slugify } from "@/lib/utils";
+import { slugify } from "@/lib/utils";
 
-function getPasswordStrength(pwd: string): 0 | 1 | 2 | 3 {
+function getPasswordStrength(pwd: string): 0 | 1 | 2 | 3 | 4 {
   if (!pwd) return 0;
   if (pwd.length < 8) return 1;
-  const hasLetter = /[a-zA-Z]/.test(pwd);
-  const hasDigit = /[0-9]/.test(pwd);
-  if (hasLetter && hasDigit) return 3;
-  return 2;
+  let score = 1;
+  if (pwd.length >= 10) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  return Math.min(score, 4) as 0 | 1 | 2 | 3 | 4;
 }
 
 export default function RegisterPage() {
@@ -24,7 +26,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const passwordStrength = getPasswordStrength(password);
 
@@ -32,25 +34,19 @@ export default function RegisterPage() {
     passwordStrength === 1
       ? "Zəif"
       : passwordStrength === 2
-      ? "Orta"
-      : passwordStrength === 3
-      ? "Güclü"
-      : "";
+        ? "Orta"
+        : passwordStrength === 3
+          ? "Güclü"
+          : passwordStrength === 4
+            ? "Çox Güclü"
+            : "";
 
   const strengthColors = [
-    passwordStrength >= 1 ? "bg-red-500" : "bg-gray-200",
-    passwordStrength >= 2 ? (passwordStrength === 2 ? "bg-yellow-400" : "bg-green-500") : "bg-gray-200",
-    passwordStrength >= 3 ? "bg-green-500" : "bg-gray-200",
+    passwordStrength >= 1 ? "var(--accent)" : "var(--border)",
+    passwordStrength >= 2 ? "var(--accent)" : "var(--border)",
+    passwordStrength >= 3 ? "var(--accent)" : "var(--border)",
+    passwordStrength >= 4 ? "var(--accent)" : "var(--border)",
   ];
-
-  const strengthTextColor =
-    passwordStrength === 1
-      ? "text-red-500"
-      : passwordStrength === 2
-      ? "text-yellow-500"
-      : passwordStrength === 3
-      ? "text-green-600"
-      : "";
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,19 +67,7 @@ export default function RegisterPage() {
     }
 
     try {
-      // 1. Sign Up
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { onboarding_completed: false },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("İstifadəçi məlumatları alınmadı");
-
-      // 3. Slug — check for duplicates
+      // 1. Prepare Slug
       let companySlug = slugify(companyName);
       const { data: existingSlug } = await supabase
         .from("companies")
@@ -95,47 +79,145 @@ export default function RegisterPage() {
         companySlug = companySlug + "-" + Math.floor(1000 + Math.random() * 9000);
       }
 
-      // 4. Create Company
-      const { data: companyData, error: companyError } = await supabase
-        .from("companies")
-        .insert({
-          slug: companySlug,
-          owner_id: authData.user.id,
-          status: "draft",
-        })
-        .select()
-        .single();
+      // 2. Sign Up
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { onboarding_completed: false },
+        },
+      });
 
-      if (companyError) throw companyError;
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("İstifadəçi məlumatları alınmadı");
 
-      // 5. Create Company Translation (default locale 'az')
-      const { error: translationError } = await supabase
-        .from("company_translations")
-        .insert({
-          company_id: companyData.id,
-          locale: "az",
-          name: companyName,
-        });
+      // 3. Create Company & Translation safely
+      let companyData;
+      try {
+        const { data: cData, error: companyError } = await supabase
+          .from("companies")
+          .insert({
+            slug: companySlug,
+            owner_id: authData.user.id,
+            status: "draft",
+          })
+          .select()
+          .single();
 
-      if (translationError) throw translationError;
+        if (companyError || !cData) {
+          throw companyError ?? new Error("Şirkət yaradılmadı");
+        }
+        companyData = cData;
+      } catch (err: unknown) {
+        throw new Error(
+          "Hesab yaradıldı amma şirkət profili qurulmadı. Zəhmət olmasa dəstəklə əlaqə saxlayın."
+        );
+      }
 
-      window.location.href = "/dashboard";
-    } catch (err: any) {
-      setError(err.message || "Qeydiyyat zamanı xəta baş verdi");
+      try {
+        const { error: translationError } = await supabase
+          .from("company_translations")
+          .insert({
+            company_id: companyData.id,
+            locale: "az",
+            name: companyName,
+          });
+
+        if (translationError) throw translationError;
+      } catch (err: unknown) {
+        throw new Error(
+          "Hesab yaradıldı amma şirkət profili qurulmadı. Zəhmət olmasa dəstəklə əlaqə saxlayın."
+        );
+      }
+
+      window.location.href = "/onboarding";
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Qeydiyyat zamanı xəta baş verdi";
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white px-8 py-10 shadow-xl rounded-2xl border border-gray-100">
-          <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-            <h2 className="text-left text-3xl font-bold tracking-tight text-gray-900 mb-2">
+    <div className="flex min-h-[calc(100vh-64px)] flex-col lg:grid lg:grid-cols-2 items-center justify-center px-6 py-12 lg:px-8 gap-12 max-w-6xl mx-auto w-full">
+      {/* GEO Value Proposition Block */}
+      <div className="flex flex-col justify-center flex-1 max-w-lg text-left">
+        <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-6 leading-[1.15]">
+          Şirkətinizi gələcəyin axtarış sistemlərinə{" "}
+          <span style={{ color: 'var(--accent)' }}>
+            hazırlayın
+          </span>
+        </h1>
+        <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed">
+          Encyclo ilə şirkət məlumatlarınızı GEO (Generative Engine Optimization)
+          formatında qurun və süni intellekt axtarış motorlarında ön sırada
+          yer alın.
+        </p>
+        <ul className="space-y-6">
+          <li className="flex items-start gap-4">
+            <div
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: 'var(--badge-bg)', color: 'var(--badge-fg)' }}
+            >
+              <Check className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="font-bold text-base">
+                ChatGPT, Perplexity və Google AI-da tapılın
+              </h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                Süni intellekt axtarışlarında şirkətinizin və məhsullarınızın
+                təbii şəkildə tapılmasını optimallaşdırın.
+              </p>
+            </div>
+          </li>
+          <li className="flex items-start gap-4">
+            <div
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: 'var(--badge-bg)', color: 'var(--badge-fg)' }}
+            >
+              <Check className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="font-bold text-base">
+                Müasir B2B SaaS profili
+              </h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                Bütün fəaliyyət məlumatlarınızı və təsvirlərinizi bir peşəkar B2B
+                panelində cəmləşdirin.
+              </p>
+            </div>
+          </li>
+          <li className="flex items-start gap-4">
+            <div
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: 'var(--badge-bg)', color: 'var(--badge-fg)' }}
+            >
+              <Check className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="font-bold text-base">
+                Süni İntellekt dəstəyi
+              </h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                AI köməkçisi vasitəsilə profil məlumatlarınızı bir kliklə mükəmməl
+                Azərbaycan dilində generasiya edin.
+              </p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      {/* Register Form */}
+      <div className="w-full sm:max-w-md shrink-0">
+        <div className="rounded-3xl border border-border bg-surface p-8 card-hover">
+          <div className="mb-8">
+            <h2 className="text-3xl font-black tracking-tight mb-2">
               Hesab yaradın
             </h2>
-            <p className="text-left text-sm text-gray-500 mb-8">
+            <p className="text-sm text-muted-foreground">
               Şirkətinizi Encyclo-da yerləşdirin
             </p>
           </div>
@@ -145,7 +227,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="companyName"
-                className="block text-sm font-semibold leading-6 text-gray-900 mb-2"
+                className="block text-xs uppercase tracking-widest font-semibold text-muted-foreground mb-2"
               >
                 Şirkət adı
               </label>
@@ -156,7 +238,7 @@ export default function RegisterPage() {
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="block w-full rounded-xl border-0 p-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all"
+                className="block w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-accent transition-colors"
                 placeholder="Acme Inc."
               />
             </div>
@@ -165,7 +247,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-semibold leading-6 text-gray-900 mb-2"
+                className="block text-xs uppercase tracking-widest font-semibold text-muted-foreground mb-2"
               >
                 Email ünvanı
               </label>
@@ -177,7 +259,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full rounded-xl border-0 p-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all"
+                className="block w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-accent transition-colors"
                 placeholder="name@company.com"
               />
             </div>
@@ -186,7 +268,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-semibold leading-6 text-gray-900 mb-2"
+                className="block text-xs uppercase tracking-widest font-semibold text-muted-foreground mb-2"
               >
                 Şifrə
               </label>
@@ -198,13 +280,13 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border-0 p-2.5 pr-11 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all"
+                  className="block w-full rounded-lg border border-border bg-background pl-3 pr-11 py-2.5 text-sm outline-none focus:border-accent transition-colors"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-xl text-gray-400 hover:text-gray-600 ring-1 ring-gray-300 transition-colors"
+                  className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-lg text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -222,14 +304,15 @@ export default function RegisterPage() {
                     {strengthColors.map((color, i) => (
                       <div
                         key={i}
-                        className={cn(
-                          "h-1.5 flex-1 rounded-full transition-all duration-300",
-                          color
-                        )}
+                        className="h-1.5 flex-1 rounded-full transition-all duration-300"
+                        style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
-                  <p className={cn("text-xs mt-1 font-medium", strengthTextColor)}>
+                  <p
+                    className="text-xs mt-1 font-semibold"
+                    style={{ color: passwordStrength >= 3 ? 'var(--accent)' : 'var(--muted-foreground)' }}
+                  >
                     {strengthLabel}
                   </p>
                 </div>
@@ -240,7 +323,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-semibold leading-6 text-gray-900 mb-2"
+                className="block text-xs uppercase tracking-widest font-semibold text-muted-foreground mb-2"
               >
                 Şifrəni təsdiqlə
               </label>
@@ -252,13 +335,13 @@ export default function RegisterPage() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="block w-full rounded-xl border-0 p-2.5 pr-11 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all"
+                  className="block w-full rounded-lg border border-border bg-background pl-3 pr-11 py-2.5 text-sm outline-none focus:border-accent transition-colors"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-xl text-gray-400 hover:text-gray-600 ring-1 ring-gray-300 transition-colors"
+                  className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-lg text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? (
@@ -271,7 +354,7 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg border border-red-100">
+              <div className="text-red-500 text-sm bg-red-50/50 p-3 rounded-lg border border-red-100">
                 {error}
               </div>
             )}
@@ -280,33 +363,12 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={cn(
-                  "flex w-full justify-center rounded-xl bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-white shadow-lg hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed",
-                  isLoading && "animate-pulse"
-                )}
+                className="flex w-full justify-center rounded-full px-5 py-3 text-sm font-semibold btn-press transition-colors disabled:opacity-75 disabled:cursor-not-allowed"
+                style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <Loader2 className="animate-spin h-5 w-5" />
                     Hesab yaradılır...
                   </span>
                 ) : (
@@ -316,11 +378,12 @@ export default function RegisterPage() {
             </div>
           </form>
 
-          <p className="mt-8 text-center text-sm text-gray-500">
+          <p className="mt-8 text-center text-sm text-muted-foreground">
             Hesabınız var?{" "}
             <Link
               href="/login"
-              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500 transition-colors"
+              className="font-bold hover:underline transition-colors"
+              style={{ color: 'var(--accent)' }}
             >
               Daxil olun
             </Link>

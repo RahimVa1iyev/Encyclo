@@ -1,7 +1,7 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicSupabaseClient } from '@/lib/supabase/server'
 
 export default async function sitemap() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createPublicSupabaseClient()
 
   const [
     { data: companies },
@@ -10,11 +10,11 @@ export default async function sitemap() {
   ] = await Promise.all([
     supabase
       .from('companies')
-      .select('slug, created_at')
+      .select('slug, created_at, updated_at')
       .eq('status', 'active'),
     supabase
       .from('products')
-      .select('slug, created_at')
+      .select('slug, created_at, updated_at')
       .eq('status', 'active'),
     supabase
       .from('categories')
@@ -22,26 +22,25 @@ export default async function sitemap() {
   ])
 
   const companyUrls = (companies || []).map(c => ({
-    url: `https://encyclo.az/encyclopedia/companies/${c.slug}`,
-    lastModified: c.created_at,
+    url: `https://encyclo.az/companies/${c.slug}`,
+    lastModified: c.updated_at || c.created_at,
   }))
 
   const productUrls = (products || []).map(p => ({
-    url: `https://encyclo.az/encyclopedia/products/${p.slug}`,
-    lastModified: p.created_at,
+    url: `https://encyclo.az/products/${p.slug}`,
+    lastModified: p.updated_at || p.created_at,
   }))
 
   const categoryUrls = (categories || []).map(c => ({
-    url: `https://encyclo.az/encyclopedia/categories/${c.slug}`,
+    url: `https://encyclo.az/categories/${c.slug}`,
     lastModified: c.created_at,
   }))
 
   return [
     { url: 'https://encyclo.az', lastModified: new Date() },
     { url: 'https://encyclo.az/encyclopedia', lastModified: new Date() },
-    { url: 'https://encyclo.az/encyclopedia/companies', lastModified: new Date() },
-    { url: 'https://encyclo.az/encyclopedia/products', lastModified: new Date() },
-    { url: 'https://encyclo.az/forum', lastModified: new Date() },
+    { url: 'https://encyclo.az/companies', lastModified: new Date() },
+    { url: 'https://encyclo.az/products', lastModified: new Date() },
     ...categoryUrls,
     ...companyUrls,
     ...productUrls,
