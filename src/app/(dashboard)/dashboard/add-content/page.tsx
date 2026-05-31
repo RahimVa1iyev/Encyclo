@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import type { Category, Company, CompanyTranslation } from "@/types";
 import Link from "next/link";
+import { toast } from "sonner";
+import { PLAN_LIMITS } from "@/lib/constants/plans";
 
 // Form types
 type ProductType = "product" | "service";
@@ -134,6 +136,8 @@ export default function AddContentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<keyof typeof PLAN_LIMITS>("starter");
+  const [productCount, setProductCount] = useState(0);
 
   // Form State
   const [type, setType] = useState<ProductType>("product");
@@ -233,6 +237,25 @@ export default function AddContentPage() {
       setCompanyEmail(compData.email || "");
       setCompanyWebsite(compData.website || "");
 
+      // Fetch Subscription
+      const { data: subData } = await supabase
+        .from("subscriptions")
+        .select("plan_id")
+        .eq("company_id", compData.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const planId = subData?.plan_id || "starter";
+
+      // Fetch Product Count
+      const { count: prodCount } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", compData.id);
+
+      setPlan(planId as keyof typeof PLAN_LIMITS);
+      setProductCount(prodCount || 0);
+
       // Fetch Categories
       const { data: catData } = await supabase
         .from("categories")
@@ -263,7 +286,10 @@ export default function AddContentPage() {
     if (files.length + newFiles.length > 5) return;
 
     newFiles.forEach((file) => {
-      if (file.size > 100 * 1024 * 1024) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Şəkil ölçüsü 5MB-dan böyük ola bilməz');
+        return;
+      }
       const preview = URL.createObjectURL(file);
       setFiles((prev) => [
         ...prev,
@@ -400,6 +426,13 @@ export default function AddContentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !description || !categoryId || isSubmitting) return;
+
+    const limit = PLAN_LIMITS[plan]?.products || 5;
+    if (productCount >= limit) {
+      toast.error(`Sizin "${plan}" planınızda maksimum ${limit} məhsul əlavə edə bilərsiniz. Limitiniz dolub.`);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 

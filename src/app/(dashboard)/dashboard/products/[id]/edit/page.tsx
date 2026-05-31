@@ -245,7 +245,10 @@ export default function EditProductPage() {
     }
 
     filesToAdd.forEach((file) => {
-      if (file.size > 100 * 1024 * 1024) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Şəkil ölçüsü 5MB-dan böyük ola bilməz');
+        return;
+      }
       const preview = URL.createObjectURL(file);
       setNewFiles((prev) => [
         ...prev,

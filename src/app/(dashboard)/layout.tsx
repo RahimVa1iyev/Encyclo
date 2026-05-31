@@ -31,36 +31,38 @@ type Item = {
   disabled?: boolean;
 };
 
-const groups: { label: string; items: Item[] }[] = [
-  { label: "Əsas", items: [
-    { to: "/dashboard", label: "Dashboard", icon: Home },
-    { to: "/dashboard/products", label: "Məhsullar", icon: Package },
-    { to: "/dashboard/add-content", label: "Məhsul əlavə et", icon: Plus },
-  ]},
-  { label: "İdarəetmə", items: [
-    { to: "/dashboard/company", label: "Şirkət profili", icon: Building2 },
-    { to: "/dashboard/forum", label: "Forum & FAQ", icon: MessageSquare },
-    { to: "/dashboard/leads", label: "Müraciətlər", icon: Mail, badge: 3 },
-    { to: "/dashboard/reports", label: "Hesabatlar", icon: BarChart3 },
-  ]},
-  { label: "Alətlər", items: [
-    { to: "/dashboard/distribution", label: "Yayım", icon: Globe },
-    { to: "/dashboard/ai-content", label: "AI Məzmun", icon: Sparkles, disabled: true },
-    { to: "/dashboard/billing", label: "Billing", icon: CreditCard, disabled: true },
-  ]},
-];
-
 function DashboardSidebar({ 
   pathname, 
   onNavigate, 
   companyName, 
-  handleSignOut 
+  handleSignOut,
+  newLeadsCount
 }: { 
   pathname: string; 
   onNavigate?: () => void; 
   companyName: string; 
   handleSignOut: () => void; 
+  newLeadsCount: number;
 }) {
+  const groups: { label: string; items: Item[] }[] = [
+    { label: "Əsas", items: [
+      { to: "/dashboard", label: "Dashboard", icon: Home },
+      { to: "/dashboard/products", label: "Məhsullar", icon: Package },
+      { to: "/dashboard/add-content", label: "Məhsul əlavə et", icon: Plus },
+    ]},
+    { label: "İdarəetmə", items: [
+      { to: "/dashboard/company", label: "Şirkət profili", icon: Building2 },
+      { to: "/dashboard/forum", label: "Forum & FAQ", icon: MessageSquare },
+      { to: "/dashboard/leads", label: "Müraciətlər", icon: Mail, badge: newLeadsCount },
+      { to: "/dashboard/reports", label: "Hesabatlar", icon: BarChart3 },
+    ]},
+    { label: "Alətlər", items: [
+      { to: "/dashboard/distribution", label: "Yayım", icon: Globe },
+      { to: "/dashboard/ai-content", label: "AI Məzmun", icon: Sparkles },
+      { to: "/dashboard/billing", label: "Billing", icon: CreditCard, disabled: true },
+    ]},
+  ];
+
   return (
     <div className="flex h-full w-full flex-col" style={{ backgroundColor: "var(--nav-bg)", color: "var(--nav-fg)" }}>
       <div className="px-6 pt-6 pb-5">
@@ -136,7 +138,7 @@ function DashboardSidebar({
                     >
                       <Icon size={17} />
                       <span className="flex-1">{item.label}</span>
-                      {item.badge ? (
+                      {item.badge && item.badge > 0 ? (
                         <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ backgroundColor: "var(--accent)", color: "var(--accent-foreground)" }}>
                           {item.badge}
                         </span>
@@ -242,6 +244,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [companyName, setCompanyName] = useState("...");
+  const [newLeadsCount, setNewLeadsCount] = useState(0);
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -256,6 +259,14 @@ export default function DashboardLayout({
         .single();
       if (company?.translations?.[0]?.name) {
         setCompanyName(company.translations[0].name);
+      }
+      if (company?.id) {
+        const { count } = await supabase
+          .from('leads')
+          .select('*', { count: 'exact', head: true })
+          .eq('company_id', company.id)
+          .eq('status', 'new');
+        setNewLeadsCount(count || 0);
       }
     }
     fetchCompany();
@@ -274,6 +285,7 @@ export default function DashboardLayout({
             pathname={pathname} 
             companyName={companyName} 
             handleSignOut={handleSignOut} 
+            newLeadsCount={newLeadsCount}
           />
         </div>
       </aside>
@@ -286,6 +298,7 @@ export default function DashboardLayout({
               onNavigate={() => setOpen(false)} 
               companyName={companyName} 
               handleSignOut={handleSignOut} 
+              newLeadsCount={newLeadsCount}
             />
             <button 
               onClick={() => setOpen(false)} 

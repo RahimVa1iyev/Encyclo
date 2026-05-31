@@ -1,36 +1,36 @@
-'use client'
-
-import { useState, useEffect, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createPublicSupabaseClient } from '@/lib/supabase/server'
+import { getPaginationParams, getTotalPages } from '@/lib/pagination'
+import Pagination from '@/components/Pagination'
 import { Breadcrumb, EmptyState } from '@/components/ui-kit'
 import { ProductCard } from '@/components/cards'
+import { Metadata } from 'next'
 
-export default function AllProductsPage() {
-  const supabase = useMemo(() => createClient(), [])
-  const [products, setProducts] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [typeFilter, setTypeFilter] = useState<'all' | 'product' | 'service'>('all')
+export const metadata: Metadata = {
+  title: 'Məhsullar — Encyclo',
+  description: 'Azərbaycan şirkətlərinin məhsul və xidmətlərini kəşf edin.',
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/products`,
+  },
+}
 
-  useEffect(() => {
-    async function fetchProducts() {
-      setLoading(true)
-      let query = supabase
-        .from('products')
-        .select('*, translations:product_translations(*), company:companies(slug, logo_url, translations:company_translations(name))')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(50)
+export default async function AllProductsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const params = await searchParams
+  const { page, perPage, from, to } = getPaginationParams(params)
+  const typeFilter = (params.type as string) || 'all'
 
-      if (typeFilter !== 'all') {
-        query = query.eq('type', typeFilter)
-      }
+  const supabase = createPublicSupabaseClient()
 
-      const { data } = await query
-      setProducts(data || [])
-      setLoading(false)
-    }
-    fetchProducts()
-  }, [typeFilter])
+  let query = supabase
+    .from('products')
+    .select('*, translations:product_translations(*), company:companies(*, translations:company_translations(*))', { count: 'exact' })
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+
+  if (typeFilter === 'product') query = query.eq('type', 'product')
+  if (typeFilter === 'service') query = query.eq('type', 'service')
+
+  const { data: products, count } = await query.range(from, to)
+  const totalPages = getTotalPages(count || 0, perPage)
 
   return (
     <div className="min-h-screen py-16">
@@ -44,11 +44,11 @@ export default function AllProductsPage() {
           />
           <h1 className="text-4xl font-black tracking-tight flex items-baseline gap-3">
             Bütün Məhsullar
-            <span className="text-muted-foreground font-medium text-xl">({products.length})</span>
+            <span className="text-muted-foreground font-medium text-xl">({count || 0})</span>
           </h1>
         </div>
 
-        {/* Filter */}
+        {/* Type filter */}
         <div className="flex gap-3">
           {[
             { value: 'all', label: 'Hamısı' },
@@ -57,9 +57,9 @@ export default function AllProductsPage() {
           ].map((f) => {
             const isActive = typeFilter === f.value;
             return (
-              <button
+              <a
                 key={f.value}
-                onClick={() => setTypeFilter(f.value as any)}
+                href={`/products?type=${f.value}&page=1`}
                 className="px-5 py-2.5 rounded-full text-sm font-semibold transition-all border"
                 style={
                   isActive
@@ -68,23 +68,20 @@ export default function AllProductsPage() {
                 }
               >
                 {f.label}
-              </button>
+              </a>
             )
           })}
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-surface h-72 animate-pulse" />
-            ))}
-          </div>
-        ) : products.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+        {products && products.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product: any) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+            <Pagination currentPage={page} totalPages={totalPages} basePath={`/products?type=${typeFilter}`} />
+          </>
         ) : (
           <EmptyState
             title="Heç bir məhsul tapılmadı"

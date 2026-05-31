@@ -19,7 +19,7 @@ export default function ContactForm({ productId, companyId, productName }: Conta
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !email.trim()) {
       setError('Ad və email mütləqdir.')
@@ -63,7 +63,7 @@ export default function ContactForm({ productId, companyId, productName }: Conta
   }
 
   return (
-    <div className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <p className="text-xs text-slate-400">
         <span className="font-bold text-slate-600">{productName}</span> haqqında müraciət göndərin
       </p>
@@ -92,7 +92,7 @@ export default function ContactForm({ productId, companyId, productName }: Conta
         <p className="text-xs text-red-500 font-medium">{error}</p>
       )}
       <button
-        onClick={handleSubmit}
+        type="submit"
         disabled={loading}
         className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
       >
@@ -101,6 +101,6 @@ export default function ContactForm({ productId, companyId, productName }: Conta
           : <><Send className="w-4 h-4" /> Müraciət göndər</>
         }
       </button>
-    </div>
+    </form>
   )
 }

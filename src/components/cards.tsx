@@ -17,7 +17,7 @@ export function CompanyCard({ company }: {
     <Link href={`/companies/${company.slug}`} className="block rounded-2xl border border-border bg-surface p-6 card-hover">
       <div className="flex items-center gap-3">
         <div
-          className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full font-black text-lg text-white animate-pulse"
+          className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full font-black text-lg text-white"
           style={{ backgroundColor: 'var(--accent)' }}
         >
           {company.logo_url

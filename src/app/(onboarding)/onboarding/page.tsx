@@ -164,8 +164,8 @@ export default function OnboardingPage() {
   };
 
   const handleLogoUpload = async (file: File) => {
-    if (file.size > 2 * 1024 * 1024) {
-      setLogoUploadError("Şəkil 2MB-dan kiçik olmalıdır");
+    if (file.size > 5 * 1024 * 1024) {
+      setLogoUploadError("Şəkil 5MB-dan kiçik olmalıdır");
       return;
     }
 
@@ -472,7 +472,7 @@ export default function OnboardingPage() {
                     Logo yükləmək üçün klikləyin və ya sürükləyin
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    PNG, JPG və ya WEBP, maksimum 2MB
+                    PNG, JPG və ya WEBP, maksimum 5MB
                   </p>
                 </div>
               )}

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { RateLimiter } from '@/lib/rate-limit'
+
+const rateLimiter = new RateLimiter(20, 60000)
 
 interface OptimizeRequestBody {
   description: string;
@@ -14,6 +17,11 @@ interface OptimizeRequestBody {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  if (!rateLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Çoxlu sorğu göndərilib, bir az gözləyin' }, { status: 429 });
+  }
+
   const supabase = await createServerSupabaseClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 

@@ -122,6 +122,8 @@ export default function MyProductsPage() {
 
   const deleteProduct = async (productId: string) => {
     try {
+      await supabase.from("forum_posts").delete().eq("product_id", productId);
+      await supabase.from("leads").delete().eq("product_id", productId);
       await supabase.from("product_translations").delete().eq("product_id", productId);
       await supabase.from("products").delete().eq("id", productId);
       setProducts(prev => prev.filter(p => p.id !== productId));

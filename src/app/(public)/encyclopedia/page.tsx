@@ -24,7 +24,7 @@ export default async function EncyclopediaPage() {
     .select('*, translations:company_translations(*), category:categories(*)')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
-    .limit(6)
+    .limit(12)
 
   const { data: categories } = await supabase
     .from('categories')
@@ -36,7 +36,7 @@ export default async function EncyclopediaPage() {
     .select('*, translations:product_translations(*), company:companies(*, translations:company_translations(*))')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
-    .limit(6)
+    .limit(12)
 
   const getCategoryEmoji = (slug: string) => {
     const mapping: Record<string, string> = {

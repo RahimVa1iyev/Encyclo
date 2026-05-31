@@ -145,22 +145,35 @@ export function Navbar({ initialIsLoggedIn = false }: NavbarProps) {
           <div className="pt-3 flex items-center justify-between border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
             <ThemeSwitcher />
             <div className="flex gap-2">
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="text-sm font-medium px-3 py-1.5"
-                style={{ color: 'var(--nav-fg)' }}
-              >
-                Daxil ol
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setOpen(false)}
-                className="rounded-full px-3 py-1.5 text-sm font-semibold"
-                style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-              >
-                Qeydiyyat
-              </Link>
+              {initialIsLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full px-4 py-1.5 text-sm font-semibold"
+                  style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="text-sm font-medium px-3 py-1.5"
+                    style={{ color: 'var(--nav-fg)' }}
+                  >
+                    Daxil ol
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setOpen(false)}
+                    className="rounded-full px-3 py-1.5 text-sm font-semibold"
+                    style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+                  >
+                    Qeydiyyat
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

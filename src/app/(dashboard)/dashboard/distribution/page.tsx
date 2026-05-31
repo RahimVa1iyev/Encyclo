@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Globe, Upload, Share2, Users } from "lucide-react"
 import { redirect } from "next/navigation"
+import CopyWidgetCode from "@/components/CopyWidgetCode"
 
 export default async function DistributionPage() {
   const supabase = await createServerSupabaseClient()
@@ -112,6 +113,24 @@ export default async function DistributionPage() {
                 <h3 className="font-medium text-sm mb-1">Addım 3</h3>
                 <p className="text-xs text-muted-foreground">Oxucular məhsullarınızı kəşf edir</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Section 3 - Widget Code */}
+        <Card className="rounded-2xl border-gray-100 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+              <Globe className="h-4 w-4 text-blue-600" /> Widget Embed Kodu
+            </CardTitle>
+            <CardDescription>Bu kodu partner saytınıza yerləşdirin. Widget avtomatik olaraq uyğun məhsulları göstərəcək.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <pre className="bg-muted rounded-xl p-4 text-xs overflow-x-auto whitespace-pre-wrap">
+                {`<div id="encyclo-widget"></div>\n<script src="${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/widget.js" data-company-id="${company?.id}"></script>`}
+              </pre>
+              <CopyWidgetCode code={`<div id="encyclo-widget"></div>\n<script src="${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/widget.js" data-company-id="${company?.id}"></script>`} />
             </div>
           </CardContent>
         </Card>

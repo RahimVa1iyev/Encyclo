@@ -48,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="az" className={dmSans.variable} style={{ scrollBehavior: 'smooth' }}>
+    <html lang="az" className={dmSans.variable} style={{ scrollBehavior: 'smooth' }} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

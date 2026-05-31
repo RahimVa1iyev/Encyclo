@@ -160,6 +160,30 @@ export default async function CompanyPage(props: { params: Promise<{ slug: strin
                 )}
               </div>
             )}
+
+            {/* Social links */}
+            {company.social_links && company.social_links.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4 justify-center md:justify-start">
+                {company.social_links.map((link: any) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-accent hover:border-accent transition-colors"
+                  >
+                    {link.platform === 'linkedin' && '🔗'}
+                    {link.platform === 'twitter' && '𝕏'}
+                    {link.platform === 'facebook' && '📘'}
+                    {link.platform === 'instagram' && '📷'}
+                    {link.platform === 'youtube' && '▶️'}
+                    {link.platform === 'website' && '🌐'}
+                    {!['linkedin','twitter','facebook','instagram','youtube','website'].includes(link.platform) && '🔗'}
+                    {' '}{link.platform.charAt(0).toUpperCase() + link.platform.slice(1)}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
