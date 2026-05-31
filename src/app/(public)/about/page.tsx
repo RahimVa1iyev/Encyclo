@@ -1,6 +1,7 @@
 import { ArrowRight, Target, Eye, Heart } from "lucide-react";
 import Link from "next/link";
 import { Card, CTAButton } from "@/components/ui-kit";
+import { renderSchemas } from '@/lib/schema'
 
 export const metadata = {
   title: "Haqqında — Encyclo",
@@ -16,8 +17,7 @@ export const metadata = {
 }
 
 export default function AboutPage() {
-  const jsonLd = {
-    "@context": "https://schema.org",
+  const aboutSchema = {
     "@type": "AboutPage",
     "name": "Haqqında — Encyclo",
     "description": "Encyclo — Azərbaycan şirkətlərinin məhsul və xidmətlərini AI axtarış sistemlərində görünən hala gətirən platforma.",
@@ -31,12 +31,16 @@ export default function AboutPage() {
     }
   }
 
+  const encycloOrgSchema = {
+    "@type": "Organization",
+    "name": "Encyclo",
+    "description": "Azərbaycanın ilk Generative Engine Optimization (GEO) platforması",
+    "url": process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'
+  }
+
   return (
     <div className="min-h-screen">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {renderSchemas(aboutSchema, encycloOrgSchema)}
       {/* Hero */}
       <div style={{ backgroundColor: 'var(--hero-bg)', color: 'var(--hero-fg)' }} className="relative overflow-hidden py-24 sm:py-32">
         <div className="absolute inset-0 opacity-[0.06]" style={{

@@ -60,27 +60,66 @@ export async function middleware(request: NextRequest) {
   const isOnboarding = request.nextUrl.pathname.startsWith('/onboarding')
   const isLogin = request.nextUrl.pathname.startsWith('/login')
   const isRegister = request.nextUrl.pathname.startsWith('/register')
+  const isAdmin = request.nextUrl.pathname.startsWith('/admin')
 
-  // Not logged in — protect dashboard and onboarding
-  if (!user && (isDashboard || isOnboarding)) {
+  // Not logged in — protect dashboard, onboarding, and admin
+  if (!user && (isDashboard || isOnboarding || isAdmin)) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Logged in — check onboarding via user metadata (no DB query)
-  if (user && isDashboard) {
-    const onboardingCompleted = user.user_metadata?.onboarding_completed
+if (user) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
 
-    if (!onboardingCompleted) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
+  const role = profile?.role ?? 'company'
+
+
+  // Read role once and store in header to minimize DB calls in downstream Server Components
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-user-role', role)
+
+  const finalResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+
+  // Preserve any cookies set by supabase.auth.getUser()
+  response.cookies.getAll().forEach((cookie) => {
+    finalResponse.cookies.set(cookie.name, cookie.value)
+  })
+  
+  response = finalResponse
+
+  if (role === 'superadmin') {
+    // Superadmin strict routing: keep them in /admin
+    if (isDashboard || isOnboarding || isLogin || isRegister) {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
+    return response
+  } else {
+    // Company routing
+    if (isAdmin) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    if (isDashboard) {
+      const onboardingCompleted = user.user_metadata?.onboarding_completed
+      if (!onboardingCompleted) {
+        return NextResponse.redirect(new URL('/onboarding', request.url))
+      }
+    }
+
+    if (isLogin || isRegister) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
+}
 
-  // Logged in — redirect away from login/register
-  if (user && (isLogin || isRegister)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  return response
+return response
 }
 
 export const config = {

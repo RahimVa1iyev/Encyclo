@@ -809,7 +809,7 @@ export default function EditProductPage() {
                   Qiymət
                 </CardTitle>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  'X AZN-ə CRM' axtarışlarında üst sıraya çıxarır
+                  &apos;X AZN-ə CRM&apos; axtarışlarında üst sıraya çıxarır
                 </p>
               </div>
             </div>

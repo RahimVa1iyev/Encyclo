@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Breadcrumb, EmptyState } from '@/components/ui-kit'
 import { CompanyCard, ProductCard } from '@/components/cards'
+import { generateCollectionSchema, generateBreadcrumbSchema, renderSchemas } from '@/lib/schema'
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
@@ -88,62 +89,31 @@ export default async function CategoryPage(props: { params: Promise<{ slug: stri
   }
 
   // JSON-LD Structured Data
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Ensiklopediya",
-        "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/encyclopedia`
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": category.name,
-        "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/categories/${category.slug}`
-      }
-    ]
-  };
-
-  const itemListJsonLd = products && products.length > 0 ? {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": `${category.name} məhsulları`,
-    "itemListElement": products.map((product, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/products/${product.slug}`
-    }))
-  } : null;
-
-  const collectionPageJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": `${category.name} — Azərbaycan şirkətləri və məhsulları`,
-    "description": `${category.name} kateqoriyasındakı Azərbaycan şirkətləri və məhsulları.`,
-    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/categories/${category.slug}`,
-    "numberOfItems": (products?.length || 0) + (companies?.length || 0)
+  const collectionItems: Array<{ name: string; url: string }> = [];
+  if (products) {
+    products.forEach(p => collectionItems.push({ name: p.translations?.[0]?.name || p.slug, url: `/products/${p.slug}` }));
   }
+  if (companies) {
+    companies.forEach(c => collectionItems.push({ name: c.translations?.[0]?.name || c.slug, url: `/companies/${c.slug}` }));
+  }
+
+  const collectionSchema = generateCollectionSchema(
+    `${category.name} — Azərbaycan şirkətləri və məhsulları`,
+    `${category.name} kateqoriyasındakı Azərbaycan şirkətləri və məhsulları.`,
+    `/categories/${category.slug}`,
+    collectionItems
+  );
+
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Ana səhifə', url: '/' },
+    { name: 'Ensiklopediya', url: '/encyclopedia' },
+    { name: category.name, url: `/categories/${category.slug}` }
+  ]);
 
   return (
     <div className="min-h-screen py-16">
       {/* Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
-      {itemListJsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
-        />
-      )}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageJsonLd) }}
-      />
+      {renderSchemas(collectionSchema, breadcrumbSchema)}
 
       <div className="container mx-auto px-4 max-w-6xl space-y-12">
         {/* Breadcrumb */}

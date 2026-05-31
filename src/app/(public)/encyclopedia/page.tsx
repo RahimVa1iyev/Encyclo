@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import SearchBar from '@/components/encyclopedia/SearchBar'
 import { CompanyCard, ProductCard } from '@/components/cards'
+import { generateCollectionSchema, renderSchemas } from '@/lib/schema'
 
 export const metadata = {
   title: 'Ensiklopediya',
@@ -51,28 +52,21 @@ export default async function EncyclopediaPage() {
     return mapping[slug] || '📁'
   }
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "Azərbaycan Texnologiya Ensiklopediyası",
-    "description": "Azərbaycan şirkətlərini, məhsullarını və xidmətlərini kəşf edin.",
-    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/encyclopedia`,
-    "hasPart": companies?.map((company) => {
-      const t = company.translations?.find((t: any) => t.locale === 'az') || company.translations?.[0]
-      return {
-        "@type": "Organization",
-        "name": t?.name,
-        "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/companies/${company.slug}`
-      }
-    }) || []
+  const collectionItems: Array<{ name: string; url: string }> = [];
+  if (companies) {
+    companies.forEach(c => collectionItems.push({ name: c.translations?.[0]?.name || c.slug, url: `/companies/${c.slug}` }));
   }
+
+  const collectionSchema = generateCollectionSchema(
+    "Azərbaycan Texnologiya Ensiklopediyası",
+    "Azərbaycan şirkətlərini, məhsullarını və xidmətlərini kəşf edin.",
+    "/encyclopedia",
+    collectionItems
+  );
 
   return (
     <div className="min-h-screen">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {renderSchemas(collectionSchema)}
       
       {/* Hero Section */}
       <section style={{ backgroundColor: 'var(--hero-bg)', color: 'var(--hero-fg)' }} className="relative overflow-hidden py-24 text-center">

@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return Response.json(
+      { error: 'Giriş tələb olunur' },
+      { status: 401 }
+    )
+  }
+
   try {
     const { mode, name, category: rawCategory, answers, description } = await request.json();
     const category = rawCategory || "Göstərilməyib";

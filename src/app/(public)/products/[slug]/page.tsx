@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import ContactForm from '@/components/product/ContactForm'
 import RedditForum from '@/components/forum/RedditForum'
 import ProductTabBar from '@/components/ProductTabBar'
+import { generateProductSchema, generateFAQSchema, generateBreadcrumbSchema, extractFAQsFromDescription, renderSchemas } from '@/lib/schema'
 
 
 type ProductFeatures = {
@@ -31,6 +32,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     .from('products')
     .select('*, translations:product_translations(*), company:companies(translations:company_translations(name))')
     .eq('slug', params.slug)
+    .eq('status', 'active')
     .single()
 
   if (!product) return { title: 'Məhsul tapılmadı' }
@@ -72,6 +74,7 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
     .from('products')
     .select('*, translations:product_translations(*), company:companies(*, translations:company_translations(*), category:categories(*))')
     .eq('slug', params.slug)
+    .eq('status', 'active')
     .single()
 
   if (!product) notFound()
@@ -121,98 +124,19 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
   const displayEmail = contactOptions.email || product.company?.email;
   const displayWebsite = contactOptions.website || product.company?.website;
 
+  const productSchema = generateProductSchema(product, product.company, product.company?.category)
+  const descriptionFaqs = extractFAQsFromDescription(translation?.description || '')
+  const faqSchema = generateFAQSchema(faqPosts || [], descriptionFaqs)
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Ana səhifə', url: '/' },
+    { name: product.company?.category?.name || 'Kateqoriya', url: `/categories/${product.company?.category?.slug}` },
+    { name: companyTranslation?.name || '', url: `/companies/${product.company?.slug}` },
+    { name: translation?.name || '', url: `/products/${product.slug}` }
+  ])
+
   return (
     <div className="min-h-screen py-16">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": isService ? "Service" : "Product",
-            "name": translation?.name,
-            "description": translation?.description,
-            "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/products/${product.slug}`,
-            "image": product.images && product.images.length > 0 ? product.images : undefined,
-            "keywords": (features.keywords && features.keywords.length > 0) ? features.keywords.join(', ') : undefined,
-            "brand": {
-              "@type": "Brand",
-              "name": companyTranslation?.name
-            },
-            "offers": {
-              "@type": "Offer",
-              ...(features.price ? {
-                "price": String(features.price),
-                "priceCurrency": features.currency || "AZN",
-                "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-                "availability": "https://schema.org/InStock",
-              } : {}),
-              "url": displayWebsite || undefined,
-              "seller": {
-                "@type": "Organization",
-                "name": companyTranslation?.name,
-                "telephone": displayPhone || undefined,
-                "email": displayEmail || undefined,
-                "url": displayWebsite || undefined
-              }
-            }
-          })
-        }}
-      />
-      {faqPosts && faqPosts.length > 0 && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "FAQPage",
-              "mainEntity": faqPosts.map((faq: any) => ({
-                "@type": "Question",
-                "name": faq.question,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": faq.content
-                }
-              }))
-            })
-          }}
-        />
-      )}
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Ensiklopediya",
-                "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/encyclopedia`
-              },
-              {
-                "@type": "ListItem",
-                "position": 2,
-                "name": product.company?.category?.name,
-                "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/categories/${product.company?.category?.slug}`
-              },
-              {
-                "@type": "ListItem",
-                "position": 3,
-                "name": companyTranslation?.name,
-                "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/companies/${product.company?.slug}`
-              },
-              {
-                "@type": "ListItem",
-                "position": 4,
-                "name": translation?.name || product.slug,
-                "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/products/${product.slug}`
-              }
-            ]
-          })
-        }}
-      />
+      {renderSchemas(productSchema, breadcrumbSchema, faqSchema)}
 
       <div className="container mx-auto px-4 max-w-7xl space-y-10">
         {/* Breadcrumb Navigation */}

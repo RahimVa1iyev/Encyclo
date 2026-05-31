@@ -118,7 +118,7 @@ export default async function LeadsPage() {
           <div className="space-y-1">
             <p className="font-bold text-slate-900">Hələ müraciət yoxdur</p>
             <p className="text-sm text-slate-400 max-w-xs mx-auto">
-              Məhsul səhifələrinizdə "Müraciət göndər" formu vasitəsilə müraciətlər burada görünəcək.
+              Məhsul səhifələrinizdə &quot;Müraciət göndər&quot; formu vasitəsilə müraciətlər burada görünəcək.
             </p>
           </div>
         </div>

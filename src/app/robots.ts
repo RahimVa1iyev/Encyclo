@@ -3,8 +3,8 @@ export default function robots() {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/dashboard/', '/onboarding/', '/widget/'],
+      disallow: ['/dashboard/', '/onboarding/', '/widget/', '/admin/', '/api/'],
     },
-    sitemap: 'https://encyclo.az/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/sitemap.xml`,
   }
 }

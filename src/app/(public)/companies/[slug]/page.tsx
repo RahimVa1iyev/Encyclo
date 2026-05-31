@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Globe, ArrowRight } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { ProductCard } from '@/components/cards'
+import { generateOrganizationSchema, generateBreadcrumbSchema, renderSchemas } from '@/lib/schema'
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
@@ -12,6 +13,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     .from('companies')
     .select('*, translations:company_translations(*), category:categories(*), social_links:company_social_links(*)')
     .eq('slug', params.slug)
+    .eq('status', 'active')
     .single()
 
   if (!company) return { title: 'Şirkət tapılmadı' }
@@ -51,6 +53,7 @@ export default async function CompanyPage(props: { params: Promise<{ slug: strin
     .from('companies')
     .select('*, translations:company_translations(*), category:categories(*), social_links:company_social_links(*)')
     .eq('slug', params.slug)
+    .eq('status', 'active')
     .single()
 
   if (!company) notFound()
@@ -63,60 +66,16 @@ export default async function CompanyPage(props: { params: Promise<{ slug: strin
     .eq('company_id', company.id)
     .eq('status', 'active')
 
+  const orgSchema = generateOrganizationSchema(company, company.category)
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Ana səhifə', url: '/' },
+    { name: company.category?.name || 'Kateqoriya', url: `/categories/${company.category?.slug}` },
+    { name: translation?.name || '', url: `/companies/${company.slug}` }
+  ])
+
   return (
     <div className="min-h-screen py-16">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": translation?.name,
-            "description": translation?.description,
-            "url": company?.website,
-            "logo": company?.logo_url,
-            "telephone": company?.phone || undefined,
-            "email": company?.email || undefined,
-            "foundingDate": company?.founding_year ? String(company.founding_year) : undefined,
-            "areaServed": company?.area_served || undefined,
-            "address": company?.address ? {
-              "@type": "PostalAddress",
-              "streetAddress": company.address,
-              "addressCountry": "AZ"
-            } : undefined,
-            "sameAs": (company as any)?.social_links?.map((link: any) => link.url) || []
-          })
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Ensiklopediya",
-                "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/encyclopedia`
-              },
-              {
-                "@type": "ListItem",
-                "position": 2,
-                "name": company.category?.name,
-                "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/categories/${company.category?.slug}`
-              },
-              {
-                "@type": "ListItem",
-                "position": 3,
-                "name": translation?.name || company.slug,
-                "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/companies/${company.slug}`
-              }
-            ]
-          })
-        }}
-      />
+      {renderSchemas(orgSchema, breadcrumbSchema)}
 
       <div className="container mx-auto px-4 max-w-6xl space-y-10">
         {/* Breadcrumb Navigation */}

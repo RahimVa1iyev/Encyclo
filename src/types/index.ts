@@ -5,6 +5,14 @@ export interface Category {
   created_at: string;
 }
 
+export type UserRole = 'superadmin' | 'company';
+
+export interface Profile {
+  id: string;
+  role: UserRole;
+  created_at: string;
+}
+
 export interface CompanyTranslation {
   id: string;
   company_id: string;
@@ -93,4 +101,14 @@ export interface WidgetResponse {
 export interface SearchResponse {
   companies: Company[]
   products: Product[]
+}
+
+export type WidgetDeployment = {
+  id: string
+  company_id: string
+  domain: string
+  status: 'pending' | 'active' | 'blocked'
+  added_by: string | null
+  notes: string | null
+  created_at: string
 }

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, Sparkles, Globe2, Code2, MessagesSquare, BarChart3, Shield, Check } from 'lucide-react'
 import { createPublicSupabaseClient } from '@/lib/supabase/server'
 import { SectionHeading, Card } from '@/components/ui-kit'
+import { generateWebSiteSchema, renderSchemas } from '@/lib/schema'
 
 export const metadata = {
   title: 'Encyclo — Məhsulunuz ChatGPT-də görünsün',
@@ -33,6 +34,7 @@ export default async function HomePage() {
 
   return (
     <>
+      {renderSchemas(generateWebSiteSchema())}
       {/* HERO */}
       <section style={{ backgroundColor: 'var(--hero-bg)', color: 'var(--hero-fg)' }} className="relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.06]" style={{
@@ -87,7 +89,7 @@ export default async function HomePage() {
                 <Sparkles size={14} /> ChatGPT cavabı
               </div>
               <div className="mt-3 text-sm leading-relaxed" style={{ opacity: 0.95 }}>
-                <span style={{ opacity: 0.6 }}>"Azərbaycanda tələbələr üçün yaxşı karyera platforması var?"</span>
+                <span style={{ opacity: 0.6 }}>&quot;Azərbaycanda tələbələr üçün yaxşı karyera platforması var?&quot;</span>
                 <div className="mt-3 rounded-xl p-4 border" style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.1)' }}>
                   Bəli, <span className="font-bold" style={{ color: 'var(--accent)' }}>Taskool</span> Azərbaycan tələbələri üçün
                   AI əsaslı karyera platformasıdır. Şəxsi karyera planı və 1-1 mentorluq sessiyaları təklif edir.{' '}

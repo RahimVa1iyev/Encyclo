@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azərbaycanda texnologiya startapları 2026-cı ildə rekord səviyyəyə çatdı - AzərXəbər</title>
+    <style>
+        :root {
+            --navy: #0f1923;
+            --navy-light: #1a2a3a;
+            --accent: #e63946;
+            --text: #1a1a2e;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --surface: #f9fafb;
+            --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-serif: Georgia, "Times New Roman", serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-ui);
+            color: var(--text);
+            background-color: #ffffff;
+            line-height: 1.5;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+        }
+
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background-color: var(--accent);
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s ease;
+        }
+
+        /* HEADER */
+        .top-header {
+            background-color: var(--navy);
+            color: white;
+            padding: 15px 0;
+        }
+
+        .header-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-serif);
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .date-display {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-icon {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: white;
+            stroke-width: 2;
+            cursor: pointer;
+            transition: stroke 0.2s;
+        }
+        
+        .search-icon:hover {
+            stroke: var(--accent);
+        }
+
+        .btn-subscribe {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-subscribe:hover {
+            background-color: #c92a36;
+        }
+
+        /* NAVIGATION */
+        .main-nav {
+            background-color: var(--navy-light);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-list {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            list-style: none;
+            gap: 24px;
+            overflow-x: auto;
+        }
+
+        .nav-list li a {
+            display: block;
+            padding: 12px 0;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .nav-list li a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background-color: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .nav-list li a:hover::after,
+        .nav-list li a.active::after {
+            width: 100%;
+        }
+
+        /* TICKER */
+        .ticker-wrap {
+            background-color: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            height: 40px;
+            position: relative;
+        }
+
+        .ticker-label {
+            background-color: #c92a36;
+            padding: 0 20px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 2;
+            white-space: nowrap;
+        }
+
+        .ticker-content {
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+        }
+
+        .ticker-scroll {
+            display: flex;
+            white-space: nowrap;
+            position: absolute;
+            height: 100%;
+            align-items: center;
+            animation: ticker 25s linear infinite;
+        }
+        
+        .ticker-scroll:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .ticker-item {
+            margin-right: 50px;
+            font-size: 14px;
+        }
+
+        .ticker-item::before {
+            content: "•";
+            margin-right: 15px;
+            opacity: 0.7;
+        }
+
+        /* MAIN LAYOUT */
+        .page-container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 40px;
+        }
+
+        .main-column {
+            width: 70%;
+        }
+
+        .sidebar-column {
+            width: 30%;
+        }
+
+        /* ARTICLE STYLES */
+        .category-badge {
+            display: inline-block;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .article-headline {
+            font-family: var(--font-serif);
+            font-size: 36px;
+            line-height: 1.3;
+            color: var(--navy);
+            margin-bottom: 15px;
+        }
+
+        .article-subheadline {
+            font-size: 20px;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.4;
+            font-weight: 400;
+        }
+
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .meta-author {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .social-share {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .share-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s;
+        }
+        .share-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+        .share-fb { background-color: #1877f2; }
+        .share-tw { background-color: #1da1f2; }
+        .share-wa { background-color: #25d366; }
+
+        .hero-image {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #0f1923 0%, #008080 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .hero-text {
+            color: white;
+            font-family: var(--font-serif);
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .hero-image::after {
+            content: 'FOTO: AZƏRTAC';
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.8);
+            background: rgba(0,0,0,0.6);
+            padding: 3px 8px;
+            border-radius: 2px;
+        }
+
+        .article-body {
+            font-size: 17px;
+            line-height: 1.8;
+            color: var(--text);
+            font-family: var(--font-ui);
+        }
+
+        .article-body p {
+            margin-bottom: 24px;
+        }
+
+        .pull-quote {
+            margin: 35px 0;
+            padding: 20px 20px 20px 30px;
+            border-left: 4px solid var(--accent);
+            background-color: var(--surface);
+            font-size: 22px;
+            font-style: italic;
+            color: var(--navy);
+            line-height: 1.5;
+            font-family: var(--font-serif);
+        }
+
+        .inline-image {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(45deg, #e5e7eb, #d1d5db);
+            margin: 35px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            border-radius: 4px;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .article-tags {
+            margin-top: 40px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background-color: var(--surface);
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        .tag:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* WIDGET SECTION */
+        .widget-section {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            color: var(--navy);
+            margin-bottom: 20px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--accent);
+        }
+
+        /* COMMENTS */
+        .comments-section {
+            margin-top: 50px;
+        }
+
+        .comment-card {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comment-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--navy);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex-grow: 1;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .comment-name {
+            font-weight: bold;
+            color: var(--navy);
+        }
+
+        .comment-date {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .comment-text {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-widget {
+            margin-bottom: 40px;
+            background: white;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--navy);
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-title::before {
+            content: '';
+            width: 8px;
+            height: 16px;
+            background-color: var(--accent);
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .popular-list {
+            list-style: none;
+            counter-reset: popular-counter;
+        }
+
+        .popular-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border);
+            counter-increment: popular-counter;
+            position: relative;
+        }
+
+        .popular-item::before {
+            content: "0" counter(popular-counter);
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--surface);
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            z-index: 0;
+            transition: color 0.3s;
+            font-family: var(--font-serif);
+        }
+        
+        .popular-item:hover::before {
+            color: #fde8e9;
+        }
+
+        .popular-img {
+            width: 60px;
+            height: 60px;
+            background-color: #d1d5db;
+            border-radius: 4px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+            margin-left: 15px;
+        }
+
+        .popular-info {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .popular-title {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .popular-title:hover {
+            color: var(--accent);
+        }
+
+        .popular-views {
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .latest-list {
+            list-style: none;
+        }
+
+        .latest-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .latest-img {
+            width: 80px;
+            height: 60px;
+            background-color: #d1d5db;
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .latest-item:hover .latest-img {
+            opacity: 0.8;
+        }
+
+        .latest-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .latest-title {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+        
+        .latest-title:hover {
+            color: var(--accent);
+        }
+
+        .latest-time {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .ad-placeholder {
+            width: 300px;
+            height: 250px;
+            background-color: var(--surface);
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            font-weight: bold;
+            margin: 0 auto;
+            font-size: 14px;
+        }
+
+        /* FOOTER */
+        .site-footer {
+            background-color: var(--navy);
+            color: white;
+            padding: 60px 0 20px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-col h4 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: white;
+            font-family: var(--font-serif);
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-col h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 30px;
+            height: 2px;
+            background-color: var(--accent);
+        }
+
+        .footer-col p {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-col ul li a {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .footer-col ul li a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .page-container {
+                flex-direction: column;
+            }
+            .main-column, .sidebar-column {
+                width: 100%;
+            }
+            .header-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+            .article-headline {
+                font-size: 28px;
+            }
+            .hero-image {
+                height: 250px;
+            }
+            .pull-quote {
+                font-size: 18px;
+                padding: 15px 15px 15px 20px;
+            }
+            .sidebar {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="progress-bar"></div>
+
+    <header>
+        <div class="top-header">
+            <div class="header-container">
+                <a href="#" class="logo">AzərXəbər</a>
+                <div class="date-display">22 May 2026, Cümə</div>
+                <div class="header-actions">
+                    <svg class="search-icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <button class="btn-subscribe">Abunə ol</button>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="main-nav">
+            <ul class="nav-list" id="nav-list">
+                <li><a href="test-news.html">Ana Səhifə</a></li>
+                <li><a href="test-news.html?category=maliyye">Maliyyə</a></li>
+                <li><a href="test-news.html?category=texnologiya" class="active">Texnologiya</a></li>
+                <li><a href="test-news.html?category=saglamliq">Sağlamlıq</a></li>
+                <li><a href="test-news.html?category=tehsil">Təhsil</a></li>
+                <li><a href="test-news.html?category=emlak">Əmlak</a></li>
+            </ul>
+        </nav>
+
+        <div class="ticker-wrap">
+            <div class="ticker-label">SON DƏQİQƏ:</div>
+            <div class="ticker-content" id="ticker-content">
+                <div class="ticker-scroll" id="ticker-scroll">
+                    <span class="ticker-item">Mərkəzi Bank ilin sonuna qədər inflyasiya proqnozunu yenilədi</span>
+                    <span class="ticker-item">Təhsil Nazirliyi yeni tədris proqramını təsdiq etdi</span>
+                    <span class="ticker-item">Paytaxtda yeni metro stansiyasının açılışı baş tutdu</span>
+                    <span class="ticker-item">Azərbaycan şahmatçısı beynəlxalq turnirdə qızıl medal qazandı</span>
+                    <span class="ticker-item">İqtisadiyyat Nazirliyindən sahibkarlara yeni dəstək paketi</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <main class="main-column">
+            <article>
+                <div class="category-badge">TEXNOLOGİYA</div>
+                <h1 class="article-headline">Azərbaycanda texnologiya startapları 2026-cı ildə rekord səviyyəyə çatdı — investisiyalar 3 dəfə artdı</h1>
+                <h2 class="article-subheadline">Yerli texnologiya şirkətləri beynəlxalq bazarlara çıxış əldə edir.</h2>
+                
+                <div class="article-meta">
+                    <div>
+                        <span class="meta-author">Əli Hüseynov</span>
+                    </div>
+                    <div>22 May 2026, 14:35</div>
+                    
+                    <div class="social-share">
+                        <div class="share-btn share-fb" title="Facebook-da paylaş">f</div>
+                        <div class="share-btn share-tw" title="Twitter-də paylaş">t</div>
+                        <div class="share-btn share-wa" title="WhatsApp-da paylaş">w</div>
+                    </div>
+                </div>
+
+                <div class="hero-image">
+                    <div class="hero-text">Bakı Texnologiya Parkı — 2026</div>
+                </div>
+
+                <div class="article-body">
+                    <p>Son illər ərzində Azərbaycanda texnologiya sektorunda müşahidə olunan sürətli inkişaf öz bəhrəsini verməkdədir. 2026-cı ilin birinci yarısının statistik məlumatlarına görə, ölkədə qeydiyyatdan keçmiş və fəal şəkildə investisiya cəlb edən texnologiya startaplarının sayı ötən illə müqayisədə inanılmaz dərəcədə, yəni 3 dəfə artaraq yeni rekord səviyyəyə çatıb. Bu, yerli ekosistemin artıq yetkinlik mərhələsinə qədəm qoyduğunu göstərir.</p>
+                    
+                    <p>İnnovasiyalar və Rəqəmsal İnkişaf Agentliyinin bu gün açıqladığı hesabatda bildirilir ki, bu artımın arxasında duran əsas səbəblərdən biri hökumətin tətbiq etdiyi yeni vergi güzəştləri paketidir. Eyni zamanda, "Mələk" investorlar şəbəkəsinin genişlənməsi və vençur fondlarının aktivləşməsi bazara daxil olan maliyyə resurslarının həcmini əhəmiyyətli dərəcədə artırıb. Hazırda yerli startapların əksəriyyəti öz layihələrini xaricə çıxarmaq üçün fəal çalışır.</p>
+                    
+                    <p>Müşahidələr göstərir ki, ən çox investisiya cəlb edən sahələr süni intellekt həlləri, maliyyə texnologiyaları (fintech) və yaşıl texnologiyalardır. Xüsusilə də süni intellekt əsaslı layihələr təkcə daxili bazarda deyil, qonşu ölkələrdə də böyük maraqla qarşılanır. Bir çox yerli startap artıq Avropa və Mərkəzi Asiya bazarlarına ixrac əməliyyatlarına başlayıb və uğurlu nəticələr əldə edib.</p>
+                    
+                    <blockquote class="pull-quote">
+                        "Bizim əsas məqsədimiz sadəcə yerli bazar üçün deyil, qlobal problemləri həll edəcək məhsullar yaratmaqdır. Son 6 ayda cəlb etdiyimiz investisiyalar məhz bu qlobal vizyonun və inkişafın real göstəricisidir."
+                    </blockquote>
+                    
+                    <p>Bununla yanaşı, regionlarda da texnoloji canlanma müşahidə olunur. Gəncə, Sumqayıt və Şamaxıda fəaliyyətə başlayan yeni inkubasiya mərkəzləri gənclərin innovativ ideyalarını biznesə çevirməsinə kömək edir. Ekspertlərin fikrincə, bu tendensiya gələcəkdə yalnız Bakının deyil, bütün ölkənin texnoloji potensialının artmasına xidmət edəcək və Azərbaycanı regionun əsas texnoloji mərkəzinə çevirəcək.</p>
+                    
+                    <div class="inline-image">
+                        İkinci Fotoşəkil (Placeholder)
+                    </div>
+                    
+                    <p>Təbii ki, sürətli inkişaf bəzi çətinlikləri də bərabərində gətirir. İxtisaslı kadr çatışmazlığı və kibertəhlükəsizlik məsələləri hələ də sektor üçün əsas çağırışlardan olaraq qalır. Lakin universitetlərlə özəl sektor arasında qurulan yeni əməkdaşlıq formatları bu problemlərin də yaxın illərdə öz həllini tapacağına inam yaradır. 2026-cı il, şübhəsiz ki, Azərbaycanın rəqəmsal transformasiya tarixində dönüş nöqtəsi kimi xatırlanacaq.</p>
+                </div>
+
+                <div class="article-tags">
+                    <a href="#" class="tag">#Texnologiya</a>
+                    <a href="#" class="tag">#Startap</a>
+                    <a href="#" class="tag">#İnvestisiya</a>
+                    <a href="#" class="tag">#İnnovasiya</a>
+                </div>
+            </article>
+
+            <div class="widget-section">
+                <h3 class="section-title">Əlaqəli Məhsul və Xidmətlər</h3>
+                
+                <!-- Encyclo Widget Placement -->
+                <div id="encyclo-widget"></div>
+                <script 
+                    src="http://localhost:3001/widget.js"
+                    data-key="e4a6094ea7b94b9f977e0af70462b903523853f5a0ba4659">
+                </script>
+            </div>
+
+            <div class="comments-section">
+                <h3 class="section-title">Şərhlər (12)</h3>
+                
+                <div class="comment-card">
+                    <div class="comment-avatar">R</div>
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <span class="comment-name">Rəşad M.</span>
+                            <span class="comment-date">22 May 2026, 15:20</span>
+                        </div>
+                        <div class="comment-text">Doğrudan da son zamanlar çoxlu yeni layihələr görürük. Xüsusilə də kənd təsərrüfatında texnologiyaların tətbiqi çox sevindiricidir. Uğurlar!</div>
+                    </div>
+                </div>
+
+                <div class="comment-card">
+                    <div class="comment-avatar">A</div>
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <span class="comment-name">Aynur Əliyeva</span>
+                            <span class="comment-date">22 May 2026, 16:05</span>
+                        </div>
+                        <div class="comment-text">Məqalədə qeyd olunan kadr çatışmazlığı məsələsi çox aktualdır. Universitetlər proqramlarını daha sürətlə yeniləməlidir ki, sənayenin tələblərinə cavab verə bilsinlər.</div>
+                    </div>
+                </div>
+
+                <div class="comment-card">
+                    <div class="comment-avatar">S</div>
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <span class="comment-name">Samir K.</span>
+                            <span class="comment-date">22 May 2026, 16:42</span>
+                        </div>
+                        <div class="comment-text">Bəs xarici investorlar üçün şərtlər necədir? Vergi güzəştləri yalnız yerli şirkətlərə şamil edilir, yoxsa xaricilər də yararlana bilir? Bu barədə ətraflı məlumat olsa yaxşı olar.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar-column">
+            <div class="sidebar">
+                
+                <div class="sidebar-widget">
+                    <h3 class="sidebar-title">ƏN ÇOX OXUNAN</h3>
+                    <ul class="popular-list">
+                        <li class="popular-item">
+                            <div class="popular-img"></div>
+                            <div class="popular-info">
+                                <a href="#" class="popular-title">Mərkəzi Bank rəqəmsal manatın sınaqlarına başlayır</a>
+                                <span class="popular-views">15,432 baxış</span>
+                            </div>
+                        </li>
+                        <li class="popular-item">
+                            <div class="popular-img"></div>
+                            <div class="popular-info">
+                                <a href="#" class="popular-title">Yeni tibbi sığorta qaydaları təsdiqləndi - Nələr dəyişir?</a>
+                                <span class="popular-views">12,890 baxış</span>
+                            </div>
+                        </li>
+                        <li class="popular-item">
+                            <div class="popular-img"></div>
+                            <div class="popular-info">
+                                <a href="#" class="popular-title">Avtomobil bazarında qiymətlər kəskin düşdü</a>
+                                <span class="popular-views">10,215 baxış</span>
+                            </div>
+                        </li>
+                        <li class="popular-item">
+                            <div class="popular-img"></div>
+                            <div class="popular-info">
+                                <a href="#" class="popular-title">Ali məktəblərə qəbul imtahanlarının nəticələri açıqlanıb</a>
+                                <span class="popular-views">8,764 baxış</span>
+                            </div>
+                        </li>
+                        <li class="popular-item">
+                            <div class="popular-img"></div>
+                            <div class="popular-info">
+                                <a href="#" class="popular-title">Paytaxtda yeni avtobus marşrutları istifadəyə verildi</a>
+                                <span class="popular-views">7,543 baxış</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3 class="sidebar-title">SON XƏBƏRLƏR</h3>
+                    <ul class="latest-list">
+                        <li class="latest-item">
+                            <div class="latest-img"></div>
+                            <div class="latest-info">
+                                <a href="#" class="latest-title">İxracatçı şirkətlər üçün yeni subsidiya mexanizmi yaradılır</a>
+                                <span class="latest-time">15 dəqiqə əvvəl</span>
+                            </div>
+                        </li>
+                        <li class="latest-item">
+                            <div class="latest-img"></div>
+                            <div class="latest-info">
+                                <a href="#" class="latest-title">Hava şəraiti ilə bağlı əhaliyə xəbərdarlıq edildi</a>
+                                <span class="latest-time">45 dəqiqə əvvəl</span>
+                            </div>
+                        </li>
+                        <li class="latest-item">
+                            <div class="latest-img"></div>
+                            <div class="latest-info">
+                                <a href="#" class="latest-title">Səhmlər bazarında texnologiya şirkətlərinin indeksi yüksəldi</a>
+                                <span class="latest-time">1 saat əvvəl</span>
+                            </div>
+                        </li>
+                        <li class="latest-item">
+                            <div class="latest-img"></div>
+                            <div class="latest-info">
+                                <a href="#" class="latest-title">Tələbə kreditlərinin verilməsi qaydaları sadələşdirilir</a>
+                                <span class="latest-time">2 saat əvvəl</span>
+                            </div>
+                        </li>
+                        <li class="latest-item">
+                            <div class="latest-img"></div>
+                            <div class="latest-info">
+                                <a href="#" class="latest-title">Elektron ticarət dövriyyəsi ötən rübdə 25% artıb</a>
+                                <span class="latest-time">3 saat əvvəl</span>
+                            </div>
+                        </li>
+                        <li class="latest-item">
+                            <div class="latest-img"></div>
+                            <div class="latest-info">
+                                <a href="#" class="latest-title">Təhsil sahəsində yeni rəqəmsal platforma təqdim olundu</a>
+                                <span class="latest-time">4 saat əvvəl</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-widget">
+                    <div class="ad-placeholder">
+                        300 × 250 Reklam
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-col">
+                <h4>Haqqımızda</h4>
+                <p>AzərXəbər — ölkənin ən etibarlı və operativ xəbər portalıdır. Biz gündəlik siyasət, iqtisadiyyat, cəmiyyət və texnologiya xəbərlərini obyektiv şəkildə oxucularımıza çatdırırıq.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Bölmələr</h4>
+                <ul>
+                    <li><a href="#">Siyasət</a></li>
+                    <li><a href="#">İqtisadiyyat</a></li>
+                    <li><a href="#">Cəmiyyət</a></li>
+                    <li><a href="#">Texnologiya</a></li>
+                    <li><a href="#">İdman</a></li>
+                    <li><a href="#">Mədəniyyət</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Əlaqə</h4>
+                <ul>
+                    <li>📍 Bakı ş., Mətbuat prospekti 12</li>
+                    <li>📞 +994 12 555 00 00</li>
+                    <li>✉️ info@azerxeber.az</li>
+                    <li>
+                        <br>
+                        <strong>Bizi İzləyin:</strong><br>
+                        Facebook | Twitter | Instagram
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 AzərXəbər. Bütün hüquqlar qorunur. Materiallardan istifadə edərkən mənbəyə istinad mütləqdir.
+        </div>
+    </footer>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const category = params.get('category') || 'texnologiya';
+
+        const articles = {
+            texnologiya: {
+                badge: 'TEXNOLOGİYA',
+                title: 'Azərbaycanda texnologiya startapları 2026-cı ildə rekord səviyyəyə çatdı — investisiyalar 3 dəfə artdı',
+                subtitle: 'Yerli texnologiya şirkətləri beynəlxalq bazarlara çıxış əldə edir.',
+                body: [
+                    'Son illər ərzində Azərbaycanda texnologiya sektorunda müşahidə olunan sürətli inkişaf öz bəhrəsini verməkdədir. 2026-cı ilin birinci yarısının statistik məlumatlarına görə, ölkədə qeydiyyatdan keçmiş və fəal şəkildə investisiya cəlb edən texnologiya startaplarının sayı ötən illə müqayisədə inanılmaz dərəcədə, yəni 3 dəfə artaraq yeni rekord səviyyəyə çatıb. Bu, yerli ekosistemin artıq yetkinlik mərhələsinə qədəm qoyduğunu göstərir.',
+                    'İnnovasiyalar və Rəqəmsal İnkişaf Agentliyinin bu gün açıqladığı hesabatda bildirilir ki, bu artımın arxasında duran əsas səbəblərdən biri hökumətin tətbiq etdiyi yeni vergi güzəştləri paketidir. Eyni zamanda, "Mələk" investorlar şəbəkəsinin genişlənməsi və vençur fondlarının aktivləşməsi bazara daxil olan maliyyə resurslarının həcmini əhəmiyyətli dərəcədə artırıb. Hazırda yerli startapların əksəriyyəti öz layihələrini xaricə çıxarmaq üçün fəal çalışır.',
+                    'Müşahidələr göstərir ki, ən çox investisiya cəlb edən sahələr süni intellekt həlləri, maliyyə texnologiyaları (fintech) və yaşıl texnologiyalardır. Xüsusilə də süni intellekt əsaslı layihələr təkcə daxili bazarda deyil, qonşu ölkələrdə də böyük maraqla qarşılanır. Bir çox yerli startap artıq Avropa və Mərkəzi Asiya bazarlarına ixrac əməliyyatlarına başlayıb və uğurlu nəticələr əldə edib.',
+                    '"Bizim əsas məqsədimiz sadəcə yerli bazar üçün deyil, qlobal problemləri həll edəcək məhsullar yaratmaqdır. Son 6 ayda cəlb etdiyimiz investisiyalar məhz bu qlobal vizyonun və inkişafın real göstəricisidir."',
+                    'Bununla yanaşı, regionlarda da texnoloji canlanma müşahidə olunur. Gəncə, Sumqayıt və Şamaxıda fəaliyyətə başlayan yeni inkubasiya mərkəzləri gənclərin innovativ ideyalarını biznesə çevirməsinə kömək edir. Ekspertlərin fikrincə, bu tendensiya gələcəkdə yalnız Bakının deyil, bütün ölkənin texnoloji potensialının artmasına xidmət edəcək və Azərbaycanı regionun əsas texnoloji mərkəzinə çevirəcək.',
+                    'Təbii ki, sürətli inkişaf bəzi çətinlikləri də bərabərində gətirir. İxtisaslı kadr çatışmazlığı və kibertəhlükəsizlik məsələləri hələ də sektor üçün əsas çağırışlardan olaraq qalır. Lakin universitetlərlə özəl sektor arasında qurulan yeni əməkdaşlıq formatları bu problemlərin də yaxın illərdə öz həllini tapacağına inam yaradır. 2026-cı il, şübhəsiz ki, Azərbaycanın rəqəmsal transformasiya tarixində dönüş nöqtəsi kimi xatırlanacaq.'
+                ],
+                tags: ['#Texnologiya', '#Startap', '#İnvestisiya', '#İnnovasiya'],
+                heroColor: 'linear-gradient(135deg, #0f1923 0%, #008080 100%)',
+                heroText: 'Bakı Texnologiya Parkı — 2026'
+            },
+            maliyye: {
+                badge: 'MALİYYƏ',
+                title: 'Azərbaycanda bank sektoru 2026-cı ildə rekord mənfəət əldə etdi',
+                subtitle: 'Kredit portfeli genişlənir, faiz dərəcələri sabitləşir',
+                body: [
+                    'Azərbaycanın bank sektoru 2026-cı ilin birinci rübündə xalis mənfəətini əhəmiyyətli dərəcədə artıraraq rekord nəticələr nümayiş etdirib. Mərkəzi Bankın açıqladığı son statistik məlumatlara görə, kommersiya banklarının ümumi mənfəəti ötən ilin eyni dövrü ilə müqayisədə 25% artaraq 350 milyon manatı ötüb.',
+                    'Bu artımın əsas səbəblərindən biri rəqəmsallaşma prosesinin sürətlənməsi və əməliyyat xərclərinin optimallaşdırılmasıdır. Eyni zamanda, biznes kreditlərinə olan tələbatın artması və aktivlərin keyfiyyətinin yaxşılaşması bankların gəlirliliyinə müsbət təsir göstərib. Xüsusilə də kiçik və orta sahibkarlığa verilən kreditlərin həcmində nəzərəçarpacaq dərəcədə artım müşahidə olunub.',
+                    'Digər tərəfdən, əhalinin banklara olan inamı da artmaqdadır. Fiziki şəxslərin əmanətləri ilin əvvəlindən 10% artaraq yeni tarixi maksimuma çatıb. Bu, makroiqtisadi sabitliyin və manatın məzənnəsinin qorunması siyasətinin uğurlu nəticəsi kimi qiymətləndirilir.',
+                    'Mütəxəssislər bildirirlər ki, rəqəmsal bankçılıq xidmətlərinin genişlənməsi gələcəkdə də sektorun əsas inkişaf drayveri olacaq. Nağdsız ödənişlərin həcminin artması və yeni innovativ maliyyə məhsullarının bazara çıxarılması bu tendensiyanı daha da gücləndirəcək.',
+                    'Bununla belə, Mərkəzi Bank risklərin idarə edilməsi sahəsində tənzimləmə tələblərini sərtləşdirməkdə davam edir. Xüsusilə də istehlak kreditləşməsi üzrə yeni prudensial normaların tətbiqi gözlənilir ki, bu da sektorun uzunmüddətli dayanıqlığını təmin etmək məqsədi daşıyır.'
+                ],
+                tags: ['#Maliyyə', '#Bank', '#Kredit', '#İpoteka'],
+                heroColor: 'linear-gradient(135deg, #0f1923 0%, #1a6b3c 100%)',
+                heroText: 'Azərbaycan Bank Sektoru — 2026'
+            },
+            saglamliq: {
+                badge: 'SAĞLAMLIQ',
+                title: 'Azərbaycanda tibbi xidmətlərin keyfiyyəti yeni standartlara çatır',
+                subtitle: 'Yeni klinikalar və müasir avadanlıqlar sağlamlıq sektorunu dəyişir',
+                body: [
+                    'İcbari Tibbi Sığorta sisteminin tam olaraq bütün ölkə üzrə tətbiqi öz müsbət nəticələrini verməkdədir. 2026-cı ildə vətəndaşların tibbi xidmətlərə əlçatanlığı rekord səviyyəyə çatıb. Rəsmi məlumatlara görə, ilin ilk altı ayında 4 milyondan çox vətəndaş sığorta çərçivəsində tibbi xidmətlərdən ödənişsiz istifadə edib.',
+                    'Səhiyyə Nazirliyinin yeni hesabatında qeyd olunur ki, ölkəyə gətirilən yeni nəsil diaqnostika avadanlıqları xəstəliklərin erkən mərhələdə aşkarlanması faizini əhəmiyyətli dərəcədə artırıb. Xüsusilə də onkoloji və ürək-damar xəstəliklərinin müalicəsində tətbiq edilən yeni protokollar ölüm hallarının azalmasına səbəb olub.',
+                    'Bununla paralel olaraq, regionlarda müasir standartlara cavab verən yeni tibb mərkəzləri istifadəyə verilir. Son bir ildə 15-dən çox yeni poliklinika və xəstəxana vətəndaşların istifadəsinə verilib. Bu mərkəzlər ən müasir avadanlıqlarla təchiz edilib və ixtisaslı kadrlarla təmin olunub.',
+                    'Eyni zamanda, rəqəmsal səhiyyə sahəsində də mühüm addımlar atılır. Vətəndaşların elektron sağlamlıq kartlarının tam tətbiqi və teletibb xidmətlərinin genişlənməsi regionlarda yaşayan əhalinin ixtisaslı həkim məsləhətinə çıxışını asanlaşdırıb.',
+                    'Ekspertlər hesab edirlər ki, səhiyyə sektoruna qoyulan investisiyalar və kadr potensialının artırılması gələcəkdə Azərbaycanda tibbi turizmin inkişafına da təkan verəcək. Artıq indidən qonşu ölkələrdən müalicə məqsədilə ölkəmizə gələnlərin sayında artım müşahidə olunur.'
+                ],
+                tags: ['#Sağlamlıq', '#Tibb', '#Klinika'],
+                heroColor: 'linear-gradient(135deg, #0f1923 0%, #1a3a6b 100%)',
+                heroText: 'Azərbaycan Səhiyyə Sistemi — 2026'
+            },
+            tehsil: {
+                badge: 'TƏHSİL',
+                title: 'Azərbaycan universitetlərində onlayn təhsil yeni mərhələyə keçir',
+                subtitle: 'Rəqəmsal tədris platformaları tələbə sayını 40% artırıb',
+                body: [
+                    'Ali təhsil müəssisələrində rəqəmsal transformasiya prosesi sürətlə davam edir. 2026-cı tədris ilində Azərbaycanın aparıcı universitetləri tamamilə yenilənmiş hibrid təhsil modelinə keçid edib. Bu yenilik tələbələrə dərslərdə həm əyani, həm də onlayn formatda iştirak etmək imkanı yaradır.',
+                    'Təhsil Nazirliyinin məlumatına görə, yeni yaradılan milli rəqəmsal tədris platformasına artıq 50-dən çox ali və orta ixtisas təhsili müəssisəsi qoşulub. Bu platforma vasitəsilə tələbələr mühazirə materiallarına çıxış əldə edir, onlayn imtahanlar verir və müəllimlərlə interaktiv əlaqə qururlar. Sistemin tətbiqi nəticəsində tədrisin keyfiyyət göstəricilərində 15% artım qeydə alınıb.',
+                    'Hibrid təhsil modelinin ən böyük üstünlüklərindən biri də regionlarda yaşayan gənclərin paytaxt universitetlərində təhsil almaq imkanlarının genişlənməsidir. Artıq tələbələr yaşadıqları yeri tərk etmədən, distant formada ali təhsil ala bilirlər. Bu da öz növbəsində tələbə yataqxanalarında sıxlığı azaldıb və təhsil xərclərini optimallaşdırıb.',
+                    'Beynəlxalq əməkdaşlıq çərçivəsində də yeni nailiyyətlər əldə olunub. Azərbaycanın üç böyük universiteti Avropanın aparıcı ali məktəbləri ilə ikili diplom proqramlarına başlayıb. Tələbələr dərslərin bir qismini xarici professorlardan onlayn qaydada dinləmək imkanı qazanıblar.',
+                    'Mütəxəssislər qeyd edirlər ki, gələcək illərdə süni intellektin təhsil prosesinə daha dərindən inteqrasiyası gözlənilir. Hər bir tələbənin fərdi qavrama sürətinə uyğunlaşdırılmış adaptiv tədris proqramlarının hazırlanması üzrə işlər artıq başlanıb.'
+                ],
+                tags: ['#Təhsil', '#Universitet', '#OnlaynTəhsil'],
+                heroColor: 'linear-gradient(135deg, #0f1923 0%, #4a1a6b 100%)',
+                heroText: 'Azərbaycan Təhsil Sistemi — 2026'
+            },
+            emlak: {
+                badge: 'DAŞINMAZ ƏMLAK',
+                title: 'Bakıda mənzil qiymətləri 2026-cı ildə 20% bahalaşdı',
+                subtitle: 'Yeni tikinti layihələri bazarı canlandırır',
+                body: [
+                    'Paytaxtın daşınmaz əmlak bazarında son illərin ən böyük canlanması yaşanır. 2026-cı ilin əvvəlindən bəri Bakıda mənzil qiymətlərində orta hesabla 20% artım qeydə alınıb. Əmlak ekspertlərinin rəyinə görə, bu artım həm tələbin yüksəlməsi, həm də tikinti materiallarının qlobal bazardakı qiymət dəyişiklikləri ilə birbaşa bağlıdır.',
+                    'Xüsusilə yeni tikili binalarda mənzillərə olan tələbat kəskin artıb. İpoteka şərtlərinin sadələşdirilməsi və gənc ailələr üçün yeni güzəştli proqramların tətbiqi alıcılıq qabiliyyətini xeyli yüksəldib. Mərkəzi hissələrlə yanaşı, şəhər ətrafı qəsəbələrdə - Xırdalan, Masazır və Sumqayıtda da qiymət artımı və tikinti bumu müşahidə olunur.',
+                    'Bazarın diqqət çəkən digər tendensiyası isə "ağıllı ev" konsepsiyalı komplekslərə olan marağın artmasıdır. Alıcılar artıq sadəcə yaşayış sahəsi deyil, eyni zamanda enerjiyə qənaət edən, müasir təhlükəsizlik sistemləri və geniş infrastruktur (park, idman zalı, hovuz) təklif edən layihələrə üstünlük verirlər.',
+                    'Bununla yanaşı, kommersiya əmlakı bazarında da aktivlik artıb. Yeni biznes mərkəzlərinin inşası və beynəlxalq şirkətlərin Bakıda ofislər açması ofis sahələrinə olan tələbatı stimullaşdırır. İcarə qiymətlərində də buna mütənasib olaraq 10-15% arası artım qeydə alınıb.',
+                    'Gələcək proqnozlar da nikbindir. Ekspertlər ilin sonuna qədər bazarda stabilləşmə gözləsələr də, uzunmüddətli perspektivdə daşınmaz əmlakın ən etibarlı investisiya aləti olaraq qalacağını vurğulayırlar. Xüsusilə Qarabağda aparılan genişmiqyaslı quruculuq işlərinin ümumilikdə ölkənin tikinti sektoruna müsbət təsir edəcəyi bildirilir.'
+                ],
+                tags: ['#Əmlak', '#Mənzil', '#Tikinti', '#İpoteka'],
+                heroColor: 'linear-gradient(135deg, #0f1923 0%, #6b3a1a 100%)',
+                heroText: 'Bakı Daşınmaz Əmlak Bazarı — 2026'
+            }
+        };
+
+        const article = articles[category] || articles.texnologiya;
+        
+        document.querySelector('.category-badge').textContent = article.badge;
+        document.querySelector('.article-headline').textContent = article.title;
+        document.querySelector('.article-subheadline').textContent = article.subtitle;
+        document.querySelector('.hero-image').style.background = article.heroColor;
+        document.querySelector('.hero-text').textContent = article.heroText;
+        
+        const bodyEl = document.querySelector('.article-body');
+        bodyEl.innerHTML = article.body.map(p => `<p>${p}</p>`).join('');
+        
+        const tagsEl = document.querySelector('.article-tags');
+        tagsEl.innerHTML = article.tags.map(t => 
+            `<a href="#" class="tag">${t}</a>`).join('');
+        
+        document.title = article.title + ' - AzərXəbər';
+
+        const navLinks = document.querySelectorAll('.nav-list a');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            const linkCategory = new URLSearchParams(
+                new URL(link.href, window.location.origin).search
+            ).get('category');
+            
+            if (linkCategory === category || (category === 'texnologiya' && link.textContent === 'Texnologiya')) {
+                link.classList.add('active');
+            }
+        });
+
+        // Reading Progress Bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progress-bar').style.width = scrolled + '%';
+            
+            // Smooth Active Nav highlight based on scroll position logic
+            // Since we don't have separate sections, we just fake this effect slightly based on scroll depth
+            // const navLinksScroll = document.querySelectorAll('.nav-list a');
+            // if (scrolled > 20) {
+            //     // Remove active class to demonstrate dynamic active state logic
+            //     navLinksScroll.forEach(link => link.classList.remove('active'));
+            //     navLinksScroll[2].classList.add('active'); // Keep Texnologiya active
+            // }
+        });
+
+        // Smooth scroll for any anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (this.getAttribute('href') !== '#') {
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Ticker Fallback for CSS Animation Support
+        const tickerScroll = document.getElementById('ticker-scroll');
+        const tickerContent = document.getElementById('ticker-content');
+        
+        // Simple JS fallback logic just in case CSS animations fail completely
+        if (window.getComputedStyle(tickerScroll).animationName === 'none') {
+            let pos = tickerContent.offsetWidth;
+            function step() {
+                pos -= 1;
+                if (pos < -tickerScroll.offsetWidth) {
+                    pos = tickerContent.offsetWidth;
+                }
+                tickerScroll.style.transform = `translateX(${pos}px)`;
+                requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+    </script>
+</body>
+</html>

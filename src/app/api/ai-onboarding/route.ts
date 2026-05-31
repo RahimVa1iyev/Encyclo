@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 interface AIOnboardingRequest {
   companyName: string;
@@ -6,6 +7,16 @@ interface AIOnboardingRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return Response.json(
+      { error: 'Giriş tələb olunur' },
+      { status: 401 }
+    )
+  }
+
   try {
     const { companyName, categoryName } = (await request.json()) as AIOnboardingRequest;
 

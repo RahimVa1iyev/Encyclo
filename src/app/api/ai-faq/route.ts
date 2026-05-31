@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 interface AIFaqRequest {
   description: string;
@@ -10,6 +11,16 @@ interface AIFaqRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return Response.json(
+      { error: 'Giriş tələb olunur' },
+      { status: 401 }
+    )
+  }
+
   try {
     const { 
       description, 
