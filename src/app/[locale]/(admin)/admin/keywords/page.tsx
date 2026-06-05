@@ -9,9 +9,9 @@ export default async function KeywordsPage() {
       slug: true,
       categoryKeywords: { select: { id: true, keyword: true, weight: true } }
     },
-  }).then(cats => cats.map(c => ({
+  }).then((cats: any[]) => cats.map((c: any) => ({
     ...c,
-    categoryKeywords: c.categoryKeywords.map(k => ({ ...k, weight: k.weight ?? 1 }))
+    categoryKeywords: c.categoryKeywords.map((k: any) => ({ ...k, weight: k.weight ?? 1 }))
   })))
 
   return (
