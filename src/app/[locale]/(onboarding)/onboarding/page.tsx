@@ -290,7 +290,7 @@ export default function OnboardingPage() {
                 className={selectClass}
               >
                 <option value="">Kateqoriya seçin</option>
-                {categories.map((c) => (
+                {categories.map((c: any) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>

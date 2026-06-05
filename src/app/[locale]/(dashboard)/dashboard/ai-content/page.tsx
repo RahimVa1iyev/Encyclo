@@ -53,9 +53,9 @@ export default function AIContentPage() {
   // Handle product selection
   const handleProductSelect = (productId: string) => {
     setSelectedProductId(productId);
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p: any) => p.id === productId);
     if (product) {
-      const azTranslation = product.translations.find(t => t.locale === 'az');
+      const azTranslation = product.translations.find((t: any) => t.locale === 'az');
       setCurrentTranslation(azTranslation || null);
       setOptimizedDescription(""); // Reset optimized version when product changes
     }
@@ -152,9 +152,9 @@ export default function AIContentPage() {
                   <SelectValue placeholder={isLoadingProducts ? "Yüklənir..." : "Məhsul seçin"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((product) => (
+                  {products.map((product: any) => (
                     <SelectItem key={product.id} value={product.id}>
-                      {product.translations.find(t => t.locale === 'az')?.name || product.slug}
+                      {product.translations.find((t: any) => t.locale === 'az')?.name || product.slug}
                     </SelectItem>
                   ))}
                 </SelectContent>

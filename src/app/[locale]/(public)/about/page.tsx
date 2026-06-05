@@ -77,7 +77,7 @@ export default function AboutPage() {
               title: "Dəyərimiz",
               desc: "GEO — Generative Engine Optimization. Ənənəvi SEO-dan fərqli olaraq, AI sistemlərinin anlaya biləcəyi strukturlaşdırılmış məzmun.",
             },
-          ].map((item) => {
+          ].map((item: any) => {
             const Icon = item.icon;
             return (
               <Card key={item.title} className="text-center">

@@ -102,7 +102,7 @@ export default async function EncyclopediaPage(props: { params: Promise<{ locale
 
   const collectionItems: Array<{ name: string; url: string }> = [];
   const latestCompanies = companies.filter((c: any) => c.status === 'active');
-  latestCompanies.forEach(c => collectionItems.push({ name: c.translations?.[0]?.name || c.slug, url: `/companies/${c.slug}` }));
+  latestCompanies.forEach((c: any) => collectionItems.push({ name: c.translations?.[0]?.name || c.slug, url: `/companies/${c.slug}` }));
 
   const collectionSchema = generateCollectionSchema(
     "Azərbaycan Texnologiya Ensiklopediyası",

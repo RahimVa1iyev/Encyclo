@@ -41,7 +41,7 @@ export default function ReportsPage() {
         setStats({
           totalViews: productsData.reduce((sum, p) => sum + (p.views || 0), 0),
           totalProducts: productsData.length,
-          activeProducts: productsData.filter(p => p.status === 'active').length,
+          activeProducts: productsData.filter((p: any) => p.status === 'active').length,
           totalForumPosts: productsData.reduce((sum, p) => sum + (p.forum_posts?.[0]?.count || 0), 0),
         });
       }
@@ -59,7 +59,7 @@ export default function ReportsPage() {
           <div className="h-4 w-56 bg-gray-100 rounded-xl" />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_: any, i: any) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
               <div className="h-9 w-9 bg-gray-100 rounded-xl" />
               <div className="h-7 w-20 bg-gray-200 rounded-lg" />
@@ -69,7 +69,7 @@ export default function ReportsPage() {
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
           <div className="h-5 w-40 bg-gray-200 rounded-lg" />
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_: any, i: any) => (
             <div key={i} className="flex items-center gap-4 py-3 border-b border-gray-50">
               <div className="flex-1 space-y-2">
                 <div className="h-4 w-40 bg-gray-200 rounded-lg" />
@@ -125,7 +125,7 @@ export default function ReportsPage() {
             color: "text-orange-600",
             bg: "bg-orange-50"
           },
-        ].map((stat) => {
+        ].map((stat: any) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.label} className="rounded-2xl border-gray-100 shadow-sm">
@@ -180,7 +180,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {products.map((product) => {
+                  {products.map((product: any) => {
                     const name = product.translations?.find((t: any) => t.locale === 'az')?.name
                       || product.translations?.[0]?.name
                       || product.slug;

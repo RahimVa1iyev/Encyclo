@@ -77,7 +77,7 @@ export default function MyProductsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = products.filter((p: any) => {
     const name = p.translations?.[0]?.name || p.slug;
     const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || p.status === statusFilter;
@@ -116,7 +116,7 @@ export default function MyProductsPage() {
     try {
       const { deleteProductAction } = await import('../../actions');
       await deleteProductAction(productId);
-      setProducts(prev => prev.filter(p => p.id !== productId));
+      setProducts(prev => prev.filter((p: any) => p.id !== productId));
       toast.success("Məhsul silindi");
     } catch { 
       toast.error("Məhsulu silərkən xəta baş verdi"); 
@@ -147,7 +147,7 @@ export default function MyProductsPage() {
         <div className="rounded-2xl border bg-surface overflow-hidden" style={{ borderColor: "var(--border)" }}>
           <div className="h-10 bg-gray-200" />
           <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_: any, i: any) => (
               <div key={i} className="flex items-center justify-between p-4 px-5">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-200 rounded-xl flex-shrink-0" />
@@ -206,7 +206,7 @@ export default function MyProductsPage() {
           />
         </div>
         <div className="flex items-center gap-1 rounded-xl border bg-surface p-1" style={{ borderColor: "var(--border)" }}>
-          {filters.map((f) => (
+          {filters.map((f: any) => (
             <button 
               key={f.id} 
               onClick={() => setStatusFilter(f.id)}
@@ -237,17 +237,17 @@ export default function MyProductsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b" style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }}>
-                  {["Məhsul", "Növ", "Status", "Tarix", "Baxış", "Əməliyyat"].map((h) => (
+                  {["Məhsul", "Növ", "Status", "Tarix", "Baxış", "Əməliyyat"].map((h: any) => (
                     <th key={h} className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((p, i) => {
+                {filteredProducts.map((p: any, i: any) => {
                   const translation = p.translations?.[0];
                   const name = translation?.name || p.slug;
                   const thumbnail = p.images?.[0];
-                  const initials = name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+                  const initials = name.split(" ").slice(0, 2).map((w: any) => w[0]).join("").toUpperCase();
                   const displayId = p.id.split("-")[0].toUpperCase();
                   const formattedDate = format(new Date(p.created_at), "d MMM yyyy", { locale: az });
 

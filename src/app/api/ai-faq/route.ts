@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     };
 
     const intentInstructions = intents
-      .map((id, idx) => `${idx + 1}. ${intentMap[id] || id}`)
+      .map((id: any, idx: any) => `${idx + 1}. ${intentMap[id] || id}`)
       .join('\n');
 
     const extraContext = [

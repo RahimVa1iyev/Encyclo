@@ -150,7 +150,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
         <SectionHeading eyebrow="Necə işləyir?" title="4 addımda AI axtarışda" center />
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((s, i) => (
+          {steps.map((s: any, i: any) => (
             <div key={s.n} className="relative rounded-2xl border border-border bg-surface p-6 card-hover">
               <div className="text-xs font-black tracking-widest" style={{ color: 'var(--accent)' }}>{s.n}</div>
               <h3 className="mt-3 font-bold">{s.t}</h3>

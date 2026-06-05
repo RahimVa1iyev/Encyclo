@@ -143,7 +143,7 @@ export default function AddContentPage() {
     const azContent = contentByLocale.az || contentByLocale.AZ || { name: "", description: "", metaTitle: "", metaDescription: "" };
     
     const wordCount = (azContent.description || '').trim().split(/\s+/).filter(Boolean).length;
-    const questionCount = (azContent.description || '').split('\n').filter(line => line.trim().endsWith('?')).length;
+    const questionCount = (azContent.description || '').split('\n').filter((line: any) => line.trim().endsWith('?')).length;
     const hasQuestion = questionCount >= 3;
     const hasPrice = price.length > 0;
     const hasKeywords = tags.length > 0;
@@ -164,7 +164,7 @@ export default function AddContentPage() {
       { key: "english", label: "İngilis dili", passed: hasEnglish, tip: "İngilis dilinə tərcümə əlavə edin" },
     ];
 
-    const passedCount = checks.filter((c) => c.passed).length;
+    const passedCount = checks.filter((c: any) => c.passed).length;
     const percentage = Math.round((passedCount / checks.length) * 100);
 
     return { checks, percentage, passedCount, total: checks.length };
@@ -220,7 +220,7 @@ export default function AddContentPage() {
     const newFiles = Array.from(e.target.files || []);
     if (files.length + newFiles.length > 5) return;
 
-    newFiles.forEach((file) => {
+    newFiles.forEach((file: any) => {
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Şəkil ölçüsü 5MB-dan böyük ola bilməz');
         return;
@@ -268,17 +268,17 @@ export default function AddContentPage() {
   };
 
   const handleGenerateContent = async () => {
-    const answeredCount = Object.values(aiAnswers).filter((a) => a.trim()).length;
+    const answeredCount = Object.values(aiAnswers).filter((a: any) => a.trim()).length;
     if (answeredCount < 3) return;
     setIsGeneratingContent(true);
     setAiPanelError(null);
     try {
       const answers = aiQuestions
-        .map((question, i) => ({
+        .map((question: any, i: any) => ({
           question: question.text,
           answer: aiAnswers[i] || "",
         }))
-        .filter((a) => a.answer.trim());
+        .filter((a: any) => a.answer.trim());
       const res = await fetch("/api/ai-content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -323,8 +323,7 @@ export default function AddContentPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Xəta baş verdi");
-      const newKeywords = (data.keywords as string[]).filter(
-        (k) => !tags.includes(k)
+      const newKeywords = (data.keywords as string[]).filter((k: any) => !tags.includes(k)
       );
       setAiKeywords(newKeywords);
     } catch (err: unknown) {
@@ -554,7 +553,7 @@ export default function AddContentPage() {
             <CardHeader icon={Type} title="Əsas məlumatlar" subtitle="Məhsulun adı və növü" />
             <div className="mt-4 space-y-4">
               <div className="flex gap-2">
-                {["product", "service"].map((t) => (
+                {["product", "service"].map((t: any) => (
                   <button 
                     key={t} 
                     type="button"
@@ -593,7 +592,7 @@ export default function AddContentPage() {
                   style={inputStyle}
                 >
                   <option value="">Kateqoriya seçin</option>
-                  {categories.map((c) => (
+                  {categories.map((c: any) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>
@@ -671,7 +670,7 @@ export default function AddContentPage() {
                     <p className="text-[10px] text-muted-foreground">
                       Ən azı 3 suala cavab verin. Nə qədər ətraflı olsa, məzmun bir o qədər yaxşı olacaq.
                     </p>
-                    {aiQuestions.map((question, i) => (
+                    {aiQuestions.map((question: any, i: any) => (
                       <div key={i}>
                         <label className="mb-1 block text-[11px] font-semibold text-[var(--foreground)]">{question.text}</label>
                         <textarea 
@@ -698,7 +697,7 @@ export default function AddContentPage() {
                       <PrimaryButton
                         type="button"
                         onClick={handleGenerateContent}
-                        disabled={Object.values(aiAnswers).filter((a) => a.trim()).length < 3 || isGeneratingContent}
+                        disabled={Object.values(aiAnswers).filter((a: any) => a.trim()).length < 3 || isGeneratingContent}
                         className="flex-1"
                       >
                         {isGeneratingContent ? (
@@ -728,12 +727,12 @@ export default function AddContentPage() {
                       <div className="space-y-3 max-h-60 overflow-y-auto">
                         {generatedContent
                           .split(/\n{2,}/)
-                          .filter((block) => block.trim())
-                          .map((block, i) => {
+                          .filter((block: any) => block.trim())
+                          .map((block: any, i: any) => {
                             const lines = block
                               .trim()
                               .split("\n")
-                              .filter((l) => l.trim());
+                              .filter((l: any) => l.trim());
                             if (lines.length === 0) return null;
                             const firstLine = lines[0].trim();
                             const isQuestion = firstLine.endsWith("?");
@@ -921,7 +920,7 @@ export default function AddContentPage() {
             <div className="mt-4 space-y-3">
               {tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((t) => (
+                  {tags.map((t: any) => (
                     <span 
                       key={t} 
                       className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold select-none"
@@ -930,7 +929,7 @@ export default function AddContentPage() {
                       {t}
                       <button 
                         type="button" 
-                        onClick={() => setTags(tags.filter((x) => x !== t))}
+                        onClick={() => setTags(tags.filter((x: any) => x !== t))}
                         className="hover:text-red-500 transition-colors"
                       >
                         <X size={11} />
@@ -983,7 +982,7 @@ export default function AddContentPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const newKeywords = aiKeywords.filter(k => !tags.includes(k));
+                        const newKeywords = aiKeywords.filter((k: any) => !tags.includes(k));
                         const canAdd = Math.min(newKeywords.length, 10 - tags.length);
                         setTags(prev => [...prev, ...newKeywords.slice(0, canAdd)]);
                         setAiKeywords([]);
@@ -995,14 +994,14 @@ export default function AddContentPage() {
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {aiKeywords.map((kw) => (
+                    {aiKeywords.map((kw: any) => (
                       <button
                         key={kw}
                         type="button"
                         onClick={() => {
                           if (!tags.includes(kw) && tags.length < 10) {
                             setTags(prev => [...prev, kw]);
-                            setAiKeywords(prev => prev.filter(k => k !== kw));
+                            setAiKeywords(prev => prev.filter((k: any) => k !== kw));
                           }
                         }}
                         disabled={tags.includes(kw) || tags.length >= 10}
@@ -1062,7 +1061,7 @@ export default function AddContentPage() {
             {/* Preview List */}
             {files.length > 0 && (
               <div className="mt-4 grid grid-cols-1 gap-3">
-                {files.map((f) => (
+                {files.map((f: any) => (
                   <div
                     key={f.id}
                     className="flex items-center justify-between p-3 bg-[var(--muted)] rounded-xl border"
@@ -1093,7 +1092,7 @@ export default function AddContentPage() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setFiles(files.filter((item) => item.id !== f.id));
+                        setFiles(files.filter((item: any) => item.id !== f.id));
                       }}
                       className="p-1.5 hover:bg-background text-muted-foreground hover:text-foreground rounded-xl transition-colors"
                     >
@@ -1204,7 +1203,7 @@ export default function AddContentPage() {
                 <div className="h-full rounded-full transition-all duration-300" style={{ width: `${geoScore.percentage}%`, backgroundColor: "var(--accent)" }} />
               </div>
               <ul className="mt-4 space-y-2">
-                {geoScore.checks.map((c) => {
+                {geoScore.checks.map((c: any) => {
                   let displayLabel = "";
                   if (c.key === "words") displayLabel = `Təsvir 150+ söz (${c.label})`;
                   else if (c.key === "question") displayLabel = "Sual var (?)";
@@ -1232,7 +1231,7 @@ export default function AddContentPage() {
               <div className="mt-4">
                 {/* Dil tab-ları */}
                 <div className="flex gap-1.5 p-1 rounded-xl" style={{ backgroundColor: "var(--muted)" }}>
-                  {LANGUAGES.map((lang) => {
+                  {LANGUAGES.map((lang: any) => {
                     const localeKey = lang.code.toLowerCase();
                     const hasContent = contentByLocale[localeKey]?.name?.trim().length > 0 
                                     && contentByLocale[localeKey]?.description?.trim().length > 0;

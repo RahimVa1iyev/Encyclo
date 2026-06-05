@@ -72,13 +72,13 @@ function AdminSidebar({
         </Link>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
-        {groups.map((group) => (
+        {groups.map((group: any) => (
           <div key={group.label} className="mb-5">
             <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--nav-fg)", opacity: 0.45 }}>
               {group.label}
             </div>
             <ul className="space-y-0.5">
-              {group.items.map((item) => {
+              {group.items.map((item: any) => {
                 const Icon = item.icon;
                 const active = item.to === "/admin" ? pathname === "/admin" : pathname.startsWith(item.to);
                 return (

@@ -127,7 +127,7 @@ export default function FeaturesPage() {
       {/* Features Grid */}
       <div className="max-w-6xl mx-auto px-6 py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((f) => {
+          {features.map((f: any) => {
             const Icon = f.icon;
             return (
               <Card key={f.title} className="relative flex flex-col justify-between h-full">

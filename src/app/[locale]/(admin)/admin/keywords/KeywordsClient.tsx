@@ -32,7 +32,7 @@ export default function KeywordsClient({ categories }: { categories: Category[] 
   const [newCatSlug, setNewCatSlug] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const emptyCategories = categories.filter(c => c.categoryKeywords.length === 0)
+  const emptyCategories = categories.filter((c: any) => c.categoryKeywords.length === 0)
 
   const sortedCategories = [...categories].sort((a, b) => {
     return a.categoryKeywords.length - b.categoryKeywords.length
@@ -183,7 +183,7 @@ function CategoryCard({ category }: { category: Category }) {
   const handleAddSuggestion = async (sg: {keyword: string, weight: number}) => {
     try {
       await addKeyword(category.id, sg.keyword, sg.weight)
-      setSuggestions(prev => prev.filter(s => s.keyword !== sg.keyword))
+      setSuggestions(prev => prev.filter((s: any) => s.keyword !== sg.keyword))
       toast.success("Keyword əlavə edildi")
     } catch (err: any) {
       toast.error(err.message || "Xəta baş verdi")
@@ -288,7 +288,7 @@ function CategoryCard({ category }: { category: Category }) {
           <div style={{ marginTop: '8px' }}>
             <div style={{ fontSize: '12px', color: 'var(--muted-foreground)', marginBottom: '8px' }}>AI təklifləri:</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {suggestions.map((sg, idx) => (
+              {suggestions.map((sg: any, idx: any) => (
                 <SuggestionPill key={idx} suggestion={sg} onAdd={() => handleAddSuggestion(sg)} />
               ))}
             </div>

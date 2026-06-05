@@ -66,7 +66,7 @@ export default async function AllProductsPage({ params, searchParams }: { params
             { value: 'all', label: 'Hamısı' },
             { value: 'product', label: 'Məhsullar' },
             { value: 'service', label: 'Xidmətlər' },
-          ].map((f) => {
+          ].map((f: any) => {
             const isActive = typeFilter === f.value;
             return (
               <a

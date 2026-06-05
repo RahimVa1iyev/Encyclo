@@ -134,7 +134,7 @@ export default function PartnersClient({ initialSites, activeCompanies, categori
               </tr>
             </thead>
             <tbody>
-              {initialSites.map((site) => (
+              {initialSites.map((site: any) => (
                 <React.Fragment key={site.id}>
                   <tr 
                     style={{ borderBottom: '0.5px solid var(--border)', transition: 'background-color 0.2s' }}

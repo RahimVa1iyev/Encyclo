@@ -133,7 +133,7 @@ export default function EditProductPage() {
     const azContent = contentByLocale.az || contentByLocale.AZ || { name: "", description: "", metaTitle: "", metaDescription: "" };
     
     const wordCount = (azContent.description || '').trim().split(/\s+/).filter(Boolean).length;
-    const questionCount = (azContent.description || '').split('\n').filter(line => line.trim().endsWith('?')).length;
+    const questionCount = (azContent.description || '').split('\n').filter((line: any) => line.trim().endsWith('?')).length;
     const hasQuestion = questionCount >= 3;
     const hasPrice = price.length > 0;
     const hasKeywords = tags.length > 0;
@@ -154,7 +154,7 @@ export default function EditProductPage() {
       { key: "english", label: "İngilis dili", passed: hasEnglish, tip: "İngilis dilinə tərcümə əlavə edin" },
     ];
 
-    const passedCount = checks.filter((c) => c.passed).length;
+    const passedCount = checks.filter((c: any) => c.passed).length;
     const percentage = Math.round((passedCount / checks.length) * 100);
     return { checks, percentage, passedCount, total: checks.length };
   }, [contentByLocale, price, tags, existingImages, newFiles]);
@@ -327,7 +327,7 @@ export default function EditProductPage() {
       return;
     }
 
-    filesToAdd.forEach((file) => {
+    filesToAdd.forEach((file: any) => {
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Şəkil ölçüsü 5MB-dan böyük ola bilməz');
         return;
@@ -341,7 +341,7 @@ export default function EditProductPage() {
   };
 
   const removeExistingImage = (url: string) => {
-    setExistingImages(existingImages.filter((img) => img !== url));
+    setExistingImages(existingImages.filter((img: any) => img !== url));
   };
 
 
@@ -353,7 +353,7 @@ export default function EditProductPage() {
     setOptimizedText(null);
 
     // Get category name from categories array
-    const selectedCategory = categories.find(c => c.id === categoryId);
+    const selectedCategory = categories.find((c: any) => c.id === categoryId);
     const categoryName = selectedCategory?.name || '';
 
     try {
@@ -553,7 +553,7 @@ export default function EditProductPage() {
               <div className="mt-4 space-y-4">
                 <Field label="Məzmun Növü">
                   <div className="flex p-1 bg-[var(--muted)] border rounded-xl w-fit gap-1" style={{ borderColor: "var(--border)" }}>
-                    {["product", "service"].map((t) => (
+                    {["product", "service"].map((t: any) => (
                       <button
                         key={t}
                         type="button"
@@ -589,7 +589,7 @@ export default function EditProductPage() {
                     style={inputStyle}
                   >
                     <option value="">Kateqoriya seçin</option>
-                    {categories.map((c) => (
+                    {categories.map((c: any) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -650,7 +650,7 @@ export default function EditProductPage() {
                           {categoryId && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface border"
                               style={{ borderColor: "var(--border)", color: "var(--accent)" }}>
-                              {categories.find(c => c.id === categoryId)?.name}
+                              {categories.find((c: any) => c.id === categoryId)?.name}
                             </span>
                           )}
                           {price && (
@@ -705,9 +705,9 @@ export default function EditProductPage() {
                       <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
                         {optimizedText
                           .split(/\n{2,}/)
-                          .filter(block => block.trim())
-                          .map((block, i) => {
-                            const lines = block.trim().split('\n').filter(l => l.trim())
+                          .filter((block: any) => block.trim())
+                          .map((block: any, i: any) => {
+                            const lines = block.trim().split('\n').filter((l: any) => l.trim())
                             if (lines.length === 0) return null
                             const firstLine = lines[0].trim()
                             const isQuestion = firstLine.endsWith('?')
@@ -796,7 +796,7 @@ export default function EditProductPage() {
 
                 <Field label="Qiymət növü">
                   <div className="flex flex-wrap gap-2 mt-1.5">
-                    {["Fixed", "Starting from", "Contact us"].map((pt) => (
+                    {["Fixed", "Starting from", "Contact us"].map((pt: any) => (
                       <button
                         key={pt}
                         type="button"
@@ -821,7 +821,7 @@ export default function EditProductPage() {
               <CardHeader icon={FileImage} title="Media" subtitle="Şəkillər məhsul səhifəsində göstəriləcək" />
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {/* Existing Images */}
-                {existingImages.map((url, idx) => (
+                {existingImages.map((url: any, idx: any) => (
                   <div key={url} className="relative aspect-square rounded-2xl overflow-hidden border group" style={{ borderColor: "var(--border)" }}>
                     <img src={url} className="w-full h-full object-cover" alt={`Existing ${idx}`} />
                     <button
@@ -835,7 +835,7 @@ export default function EditProductPage() {
                 ))}
 
                 {/* New Files */}
-                {newFiles.map((f) => (
+                {newFiles.map((f: any) => (
                   <div key={f.id} className="relative aspect-square rounded-2xl overflow-hidden border border-dashed group" style={{ borderColor: "var(--accent)" }}>
                     {f.file.type.startsWith("image") ? (
                       <img src={f.preview} className="w-full h-full object-cover" alt="New" />
@@ -846,7 +846,7 @@ export default function EditProductPage() {
                     )}
                     <button
                       type="button"
-                      onClick={() => setNewFiles(newFiles.filter((item) => item.id !== f.id))}
+                      onClick={() => setNewFiles(newFiles.filter((item: any) => item.id !== f.id))}
                       className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full"
                     >
                       <X className="h-3 w-3" />
@@ -944,7 +944,7 @@ export default function EditProductPage() {
                   </div>
                   
                   <div className="space-y-2.5">
-                    {geoScore.checks.map((c) => (
+                    {geoScore.checks.map((c: any) => (
                       <div key={c.key} className="flex items-start gap-2.5">
                         <div className="mt-0.5 flex-shrink-0">
                           {c.passed ? (
@@ -970,7 +970,7 @@ export default function EditProductPage() {
                 <div className="mt-4">
                   {/* Dil tab-ları */}
                   <div className="flex gap-1.5 p-1 rounded-xl" style={{ backgroundColor: "var(--muted)" }}>
-                    {LANGUAGES.map((lang) => {
+                    {LANGUAGES.map((lang: any) => {
                       const localeKey = lang.code.toLowerCase();
                       const hasContent = contentByLocale[localeKey]?.name?.trim().length > 0 
                                       && contentByLocale[localeKey]?.description?.trim().length > 0;
@@ -1078,14 +1078,14 @@ export default function EditProductPage() {
                 <CardHeader icon={Tag} title="Açar sözlər" subtitle="Axtarış sorğularını hədəfləyir" />
                 <div className="mt-4 space-y-4">
                   <div className="flex flex-wrap gap-2 min-h-[28px]">
-                    {tags.map((tag) => (
+                    {tags.map((tag: any) => (
                       <span
                         key={tag}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg"
                         style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-fg)" }}
                       >
                         #{tag}
-                        <button type="button" onClick={() => setTags(tags.filter((t) => t !== tag))}>
+                        <button type="button" onClick={() => setTags(tags.filter((t: any) => t !== tag))}>
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </span>

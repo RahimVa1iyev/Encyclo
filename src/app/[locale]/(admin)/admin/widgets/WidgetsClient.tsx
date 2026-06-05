@@ -32,7 +32,7 @@ export function WidgetsClient({ deployments, companies }: { deployments: Deploym
 
   const filteredDeployments = filter === 'All' 
     ? deployments 
-    : deployments.filter(d => d.status === filter)
+    : deployments.filter((d: any) => d.status === filter)
 
   const handleStatusChange = async (id: string, status: 'active' | 'blocked') => {
     try {
@@ -107,7 +107,7 @@ export function WidgetsClient({ deployments, companies }: { deployments: Deploym
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '0.5px solid var(--border)', paddingBottom: '16px' }}>
-        {['All', 'pending', 'active', 'blocked'].map((tab) => {
+        {['All', 'pending', 'active', 'blocked'].map((tab: any) => {
           const isActive = filter === tab;
           return (
             <button

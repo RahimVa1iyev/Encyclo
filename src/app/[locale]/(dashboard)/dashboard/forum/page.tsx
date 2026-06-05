@@ -252,9 +252,9 @@ export default function ForumDashboardPage() {
 
       const { productsData, faqData } = data;
 
-      const productsWithFAQs = productsData.map((p) => ({
+      const productsWithFAQs = productsData.map((p: any) => ({
         ...p,
-        faqs: (faqData || []).filter((f) => f.product_id === p.id),
+        faqs: (faqData || []).filter((f: any) => f.product_id === p.id),
       }));
 
       setProducts(productsWithFAQs as unknown as ProductWithFAQs[]);
@@ -277,7 +277,7 @@ export default function ForumDashboardPage() {
 
       // Update local state
       setProducts((prev) =>
-        prev.map((p) =>
+        prev.map((p: any) =>
           p.id === productId
             ? { ...p, faqs: [{ id: data.id, question: data.question, content: data.content, created_at: data.created_at }, ...p.faqs] }
             : p
@@ -288,7 +288,7 @@ export default function ForumDashboardPage() {
       setAnswer("");
       setAddingFAQFor(null);
       
-      const savedProduct = products.find(p => p.id === productId);
+      const savedProduct = products.find((p: any) => p.id === productId);
       toast.success("FAQ əlavə edildi", {
         action: savedProduct?.slug ? {
           label: "Məhsulda bax",
@@ -309,9 +309,9 @@ export default function ForumDashboardPage() {
       await deleteFAQAction(faqId);
 
       setProducts((prev) =>
-        prev.map((p) =>
+        prev.map((p: any) =>
           p.id === productId
-            ? { ...p, faqs: p.faqs.filter((f) => f.id !== faqId) }
+            ? { ...p, faqs: p.faqs.filter((f: any) => f.id !== faqId) }
             : p
         ) as unknown as ProductWithFAQs[]
       );
@@ -338,11 +338,11 @@ export default function ForumDashboardPage() {
       await editFAQAction(faqId, editQuestion.trim(), editAnswer.trim());
 
       setProducts((prev) =>
-        prev.map((p) =>
+        prev.map((p: any) =>
           p.id === productId
             ? {
                 ...p,
-                faqs: p.faqs.map((f) =>
+                faqs: p.faqs.map((f: any) =>
                   f.id === faqId
                     ? { ...f, question: editQuestion.trim(), content: editAnswer.trim() }
                     : f
@@ -365,7 +365,7 @@ export default function ForumDashboardPage() {
   };
 
   const handleGenerateAIFAQ = (product: ProductWithFAQs) => {
-    const translation = product.translations?.find(t => t.locale === 'az') 
+    const translation = product.translations?.find((t: any) => t.locale === 'az') 
       || product.translations?.[0];
     
     if (!translation?.description) {
@@ -384,7 +384,7 @@ export default function ForumDashboardPage() {
   const toggleIntent = (id: string) => {
     setSelectedIntents(prev => 
       prev.includes(id) 
-        ? prev.length > 1 ? prev.filter(i => i !== id) : prev
+        ? prev.length > 1 ? prev.filter((i: any) => i !== id) : prev
         : [...prev, id]
     );
   };
@@ -401,10 +401,10 @@ export default function ForumDashboardPage() {
   };
 
   const handleSubmitQuestionnaire = async () => {
-    const product = products.find(p => p.id === questionnaireProductId);
+    const product = products.find((p: any) => p.id === questionnaireProductId);
     if (!product) return;
 
-    const translation = product.translations?.find(t => t.locale === 'az') 
+    const translation = product.translations?.find((t: any) => t.locale === 'az') 
       || product.translations?.[0];
     const description = translation?.description || '';
     const productName = translation?.name || product.slug;
@@ -448,7 +448,7 @@ export default function ForumDashboardPage() {
   };
 
   const handleSaveSelectedFAQs = async (productId: string) => {
-    const selected = aiFAQs.filter(f => f.selected);
+    const selected = aiFAQs.filter((f: any) => f.selected);
     if (selected.length === 0) return;
 
     setIsSubmitting(true);
@@ -458,7 +458,7 @@ export default function ForumDashboardPage() {
 
       // Update local state
       setProducts((prev) =>
-        prev.map((p) =>
+        prev.map((p: any) =>
           p.id === productId
             ? { ...p, faqs: [...(data as unknown as FAQ[]), ...p.faqs] }
             : p
@@ -468,7 +468,7 @@ export default function ForumDashboardPage() {
       setAiFAQs([]);
       setGeneratingFor(null);
       
-      const savedProduct = products.find(p => p.id === productId);
+      const savedProduct = products.find((p: any) => p.id === productId);
       toast.success(`${selected.length} FAQ yadda saxlanıldı`, {
         action: savedProduct?.slug ? {
           label: "Məhsulda bax",
@@ -495,7 +495,7 @@ export default function ForumDashboardPage() {
           <div className="h-7 w-48 bg-gray-200 rounded-xl" />
           <div className="h-4 w-96 bg-gray-100 rounded-xl" />
         </div>
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: 3 }).map((_: any, i: any) => (
           <div key={i} className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
             <div className="flex items-center justify-between">
               <div className="h-5 w-48 bg-gray-200 rounded-lg" />
@@ -553,7 +553,7 @@ export default function ForumDashboardPage() {
 
       {/* Products list */}
       <div className="space-y-3">
-        {products.map((product) => {
+        {products.map((product: any) => {
           const name = product.translations?.[0]?.name || product.slug;
           const isExpanded = expandedProduct === product.id;
           const isAddingFAQ = addingFAQFor === product.id;
@@ -666,9 +666,9 @@ export default function ForumDashboardPage() {
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {aiFAQs.map((faq, idx) => (
+                          {aiFAQs.map((faq: any, idx: any) => (
                             <div key={idx}
-                              onClick={() => setAiFAQs(prev => prev.map((f, i) => i === idx ? { ...f, selected: !f.selected } : f))}
+                              onClick={() => setAiFAQs(prev => prev.map((f: any, i: any) => i === idx ? { ...f, selected: !f.selected } : f))}
                               className="flex gap-3 rounded-xl border p-4 cursor-pointer transition-all"
                               style={{
                                 borderColor: faq.selected ? "color-mix(in oklab, var(--accent) 40%, transparent)" : "var(--border)",
@@ -693,13 +693,13 @@ export default function ForumDashboardPage() {
                               Ləğv et
                             </SecondaryButton>
                             <PrimaryButton 
-                              disabled={aiFAQs.filter(f => f.selected).length === 0 || isSubmitting}
+                              disabled={aiFAQs.filter((f: any) => f.selected).length === 0 || isSubmitting}
                               onClick={() => handleSaveSelectedFAQs(product.id)}
                             >
                               {isSubmitting ? (
                                 <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saxlanılır...</>
                               ) : (
-                                `Seçilənləri saxla (${aiFAQs.filter(f => f.selected).length})`
+                                `Seçilənləri saxla (${aiFAQs.filter((f: any) => f.selected).length})`
                               )}
                             </PrimaryButton>
                           </div>
@@ -786,7 +786,7 @@ export default function ForumDashboardPage() {
                     </div>
                   ) : (
                     <ul>
-                      {product.faqs.map((faq, i) => (
+                      {product.faqs.map((faq: any, i: any) => (
                         <li key={faq.id}
                           className={`group p-5 ${i !== product.faqs.length - 1 ? "border-b" : ""}`}
                           style={{ borderColor: "var(--border)" }}>
@@ -953,7 +953,7 @@ export default function ForumDashboardPage() {
             <div className="space-y-2">
               <p className="text-xs font-bold text-[var(--foreground)]">Hansı tip suallar yaradılsın?</p>
               <div className="flex flex-wrap gap-2">
-                {intents.map((intent) => {
+                {intents.map((intent: any) => {
                   const isSelected = selectedIntents.includes(intent.id);
                   return (
                     <button 

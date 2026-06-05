@@ -74,7 +74,7 @@ export default function BillingPage() {
 
       {/* Plans */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {PLANS.map((plan) => (
+        {PLANS.map((plan: any) => (
           <Card
             key={plan.name}
             className={`rounded-2xl shadow-sm overflow-hidden border-2 ${plan.color} relative`}
@@ -96,7 +96,7 @@ export default function BillingPage() {
               </div>
 
               <ul className="space-y-3">
-                {plan.features.map((feature) => (
+                {plan.features.map((feature: any) => (
                   <li key={feature} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Check className="h-4 w-4 text-indigo-500 flex-shrink-0" />
                     {feature}

@@ -87,10 +87,10 @@ export default async function CategoryPage(props: { params: Promise<{ slug: stri
   // JSON-LD Structured Data
   const collectionItems: Array<{ name: string; url: string }> = [];
   if (products) {
-    products.forEach(p => collectionItems.push({ name: p.translations?.[0]?.name || p.slug, url: `/products/${p.slug}` }));
+    products.forEach((p: any) => collectionItems.push({ name: p.translations?.[0]?.name || p.slug, url: `/products/${p.slug}` }));
   }
   if (companies) {
-    companies.forEach(c => collectionItems.push({ name: c.translations?.[0]?.name || c.slug, url: `/companies/${c.slug}` }));
+    companies.forEach((c: any) => collectionItems.push({ name: c.translations?.[0]?.name || c.slug, url: `/companies/${c.slug}` }));
   }
 
   const collectionSchema = generateCollectionSchema(

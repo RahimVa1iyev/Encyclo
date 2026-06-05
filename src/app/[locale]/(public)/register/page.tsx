@@ -280,7 +280,7 @@ export default function RegisterPage() {
               {password.length > 0 && (
                 <div className="mt-2">
                   <div className="flex gap-1">
-                    {strengthColors.map((color, i) => (
+                    {strengthColors.map((color: any, i: any) => (
                       <div
                         key={i}
                         className="h-1.5 flex-1 rounded-full transition-all duration-300"

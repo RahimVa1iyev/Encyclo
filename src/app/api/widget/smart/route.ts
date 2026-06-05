@@ -59,8 +59,8 @@ export async function GET(request: Request) {
         new URL(url).pathname
           .split(/[\/\-\_\.]/)
           .map((s: any) => s.toLowerCase().trim())
-          .filter(s => s.length >= 3)
-          .forEach(s => signals.push(s));
+          .filter((s: any) => s.length >= 3)
+          .forEach((s: any) => signals.push(s));
       }
     } catch {}
 
@@ -69,8 +69,8 @@ export async function GET(request: Request) {
         .toLowerCase()
         .split(/[\s\,\.\!\?\-\_]+/)
         .map((s: any) => s.trim())
-        .filter(s => s.length >= 3)
-        .forEach(s => signals.push(s));
+        .filter((s: any) => s.length >= 3)
+        .forEach((s: any) => signals.push(s));
     }
 
     const uniqueSignals = [...new Set(signals)];
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
 
       if (keywordMatches && keywordMatches.length > 0) {
         const scores: Record<string, number> = {};
-        keywordMatches.forEach(k => {
+        keywordMatches.forEach((k: any) => {
           if (k.category_id) {
             scores[k.category_id] = (scores[k.category_id] || 0) + (k.weight || 1);
           }
@@ -143,7 +143,7 @@ export async function GET(request: Request) {
         const aiAnswer = groqData.choices?.[0]?.message?.content?.trim();
 
         if (aiAnswer && allCategories) {
-          const matched = allCategories.find(c =>
+          const matched = allCategories.find((c: any) =>
             c.name.toLowerCase() === aiAnswer.toLowerCase()
           );
           if (matched) {

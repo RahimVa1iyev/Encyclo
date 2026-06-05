@@ -109,7 +109,7 @@ export default async function PricingPage() {
       {/* Plans */}
       <div className="max-w-7xl mx-auto px-6 py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {PLANS.map((plan) => (
+          {PLANS.map((plan: any) => (
             <div
               key={plan.name}
               className="rounded-3xl border bg-surface p-8 relative flex flex-col justify-between card-hover"
@@ -135,7 +135,7 @@ export default async function PricingPage() {
                 </div>
 
                 <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature) => (
+                  {plan.features.map((feature: any) => (
                     <li key={feature} className="flex items-center gap-2.5 text-sm text-muted-foreground">
                       <Check className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--accent)' }} />
                       {feature}

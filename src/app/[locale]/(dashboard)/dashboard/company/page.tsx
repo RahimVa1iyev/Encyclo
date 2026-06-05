@@ -189,7 +189,7 @@ export default function CompanyProfilePage() {
   };
 
   const handleGenerateContent = async () => {
-    const answeredCount = Object.values(aiAnswers).filter(a => a.trim()).length;
+    const answeredCount = Object.values(aiAnswers).filter((a: any) => a.trim()).length;
     if (answeredCount < 2) {
       setAiPanelError('Ən azı 2 suala cavab verin');
       return;
@@ -197,11 +197,11 @@ export default function CompanyProfilePage() {
     setIsGeneratingContent(true);
     setAiPanelError(null);
     try {
-      const selectedCategory = categories.find(c => c.id === categoryId)?.name || '';
-      const answersText = AI_QUESTIONS.map((q, i) => ({
+      const selectedCategory = categories.find((c: any) => c.id === categoryId)?.name || '';
+      const answersText = AI_QUESTIONS.map((q: any, i: any) => ({
         question: q.text,
         answer: aiAnswers[i] || ''
-      })).filter(a => a.answer.trim());
+      })).filter((a: any) => a.answer.trim());
 
       const res = await fetch('/api/ai-company-profile', {
         method: 'POST',
@@ -307,7 +307,7 @@ export default function CompanyProfilePage() {
       { key: 'social', label: 'Sosial media var', passed: Object.values(socialLinks).some(v => v.trim()) },
       { key: 'founding', label: 'Quruluş ili var', passed: !!foundingYear },
     ];
-    const passedCount = checks.filter(c => c.passed).length;
+    const passedCount = checks.filter((c: any) => c.passed).length;
     const percentage = Math.round((passedCount / checks.length) * 100);
     return { checks, percentage, passedCount, total: checks.length };
   }, [logoUrl, description, website, metaTitle, metaDescription, phone, socialLinks, foundingYear]);
@@ -453,7 +453,7 @@ export default function CompanyProfilePage() {
                 </div>
                 
                 <div className="space-y-3">
-                  {AI_QUESTIONS.map((question, i) => (
+                  {AI_QUESTIONS.map((question: any, i: any) => (
                     <div key={i} className="space-y-1">
                       <label className="block text-[11px] font-semibold text-[var(--foreground)]">{question.text}</label>
                       <textarea 
@@ -476,7 +476,7 @@ export default function CompanyProfilePage() {
                   <PrimaryButton
                     type="button"
                     onClick={handleGenerateContent}
-                    disabled={Object.values(aiAnswers).filter(a => a.trim()).length < 2 || isGeneratingContent}
+                    disabled={Object.values(aiAnswers).filter((a: any) => a.trim()).length < 2 || isGeneratingContent}
                     className="flex-1"
                   >
                     {isGeneratingContent ? (
@@ -513,7 +513,7 @@ export default function CompanyProfilePage() {
                   style={inputStyle}
                 >
                   <option value="">Kateqoriya seçin</option>
-                  {categories.map((c) => (
+                  {categories.map((c: any) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>
@@ -612,7 +612,7 @@ export default function CompanyProfilePage() {
                 { label: "X (Twitter)", key: "twitter" },
                 { label: "YouTube", key: "youtube" },
                 { label: "TikTok", key: "tiktok" }
-              ].map((s) => (
+              ].map((s: any) => (
                 <Field key={s.key} label={s.label}>
                   <input 
                     value={socialLinks[s.key] || ""}
@@ -643,7 +643,7 @@ export default function CompanyProfilePage() {
                 <div className="h-full rounded-full transition-all duration-300" style={{ width: `${geoScore.percentage}%`, backgroundColor: "var(--accent)" }} />
               </div>
               <ul className="mt-4 space-y-2">
-                {geoScore.checks.map((check) => (
+                {geoScore.checks.map((check: any) => (
                   <li key={check.key} className="flex items-center gap-2 text-xs"
                     style={{ color: check.passed ? "var(--foreground)" : "var(--muted-foreground)" }}>
                     <CheckCircle2 size={14} style={{ color: check.passed ? "oklch(0.55 0.16 150)" : "var(--border)" }} />

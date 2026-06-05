@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const answersText = answers
-      .filter(a => a.answer.trim())
+      .filter((a: any) => a.answer.trim())
       .map((a: any) => `Sual: ${a.question}\nCavab: ${a.answer}`)
       .join('\n\n')
 
