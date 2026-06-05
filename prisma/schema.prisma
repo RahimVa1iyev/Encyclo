@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  slug       String    @unique
+  name       String
+  created_at DateTime? @default(now()) @db.Timestamptz
+
+  products         Product[]
+  companies        Company[]
+  categoryKeywords CategoryKeyword[]
+  partnerSites     PartnerSite[]
+  translations     CategoryTranslation[]
+
+  @@map("categories")
+}
+
+model CategoryTranslation {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  category_id String?   @db.Uuid
+  locale      String    @default("az")
+  name        String
+  category    Category? @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([category_id, locale])
+  @@map("category_translations")
+}
+
+model CategoryKeyword {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id String? @db.Uuid
+  keyword     String
+  weight      Int?    @default(1)
+  locale      String  @default("az")
+
+  category Category? @relation(fields: [category_id], references: [id])
+
+  @@map("category_keywords")
+}
+
+model Company {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  slug                 String    @unique
+  logo_url             String?
+  website              String?
+  category_id          String?   @db.Uuid
+  status               String?   @default("draft")
+  owner_id             String?   @db.Uuid
+  created_at           DateTime? @default(now()) @db.Timestamptz
+  onboarding_completed Boolean?  @default(false)
+  phone                String?
+  email                String?
+  founding_year        Int?
+  area_served          String?
+
+  category             Category?            @relation(fields: [category_id], references: [id])
+  translations         CompanyTranslation[]
+  socialLinks          CompanySocialLink[]
+  products             Product[]
+  subscriptions        Subscription[]
+  leads                Lead[]
+  widgetDeployments    WidgetDeployment[]
+  partnerSiteCompanies PartnerSiteCompany[]
+
+  @@map("companies")
+}
+
+model CompanyTranslation {
+  id               String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_id       String? @db.Uuid
+  locale           String  @default("az")
+  name             String
+  description      String?
+  address          String?
+  meta_title       String?
+  meta_description String?
+
+  company Company? @relation(fields: [company_id], references: [id])
+
+  @@unique([company_id, locale])
+  @@map("company_translations")
+}
+
+model CompanySocialLink {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id String?   @db.Uuid
+  platform   String
+  url        String
+  created_at DateTime? @default(now()) @db.Timestamptz
+
+  company Company? @relation(fields: [company_id], references: [id])
+
+  @@map("company_social_links")
+}
+
+model Product {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_id      String?   @db.Uuid
+  slug            String    @unique
+  images          String[]  @default([])
+  status          String?   @default("draft")
+  created_at      DateTime? @default(now()) @db.Timestamptz
+  type            String?   @default("product")
+  views           Int?      @default(0)
+  category_id     String?   @db.Uuid
+  contact_options Json?     @default("{}")
+  leads_enabled   Boolean?  @default(false)
+
+  company      Company?             @relation(fields: [company_id], references: [id])
+  category     Category?            @relation(fields: [category_id], references: [id])
+  translations ProductTranslation[]
+  forumPosts   ForumPost[]
+  leads        Lead[]
+
+  @@map("products")
+}
+
+model ProductTranslation {
+  id               String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id       String? @db.Uuid
+  locale           String  @default("az")
+  name             String
+  description      String?
+  features         Json?   @default("{}")
+  meta_title       String?
+  meta_description String?
+
+  product Product? @relation(fields: [product_id], references: [id])
+
+  @@unique([product_id, locale])
+  @@map("product_translations")
+}
+
+model ForumPost {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id  String?   @db.Uuid
+  user_id     String?   @db.Uuid
+  content     String
+  created_at  DateTime? @default(now()) @db.Timestamptz
+  is_faq      Boolean?  @default(false)
+  question    String?
+  author_name String?
+  parent_id   String?   @db.Uuid
+  locale      String    @default("az")
+
+  product Product?    @relation(fields: [product_id], references: [id])
+  parent  ForumPost?  @relation("ForumPostReplies", fields: [parent_id], references: [id])
+  replies ForumPost[] @relation("ForumPostReplies")
+
+  @@map("forum_posts")
+}
+
+model Subscription {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_id String?   @db.Uuid
+  plan       String?   @default("basic")
+  locales    String[]  @default(["az"])
+  status     String?   @default("active")
+  expires_at DateTime? @db.Timestamptz
+  created_at DateTime? @default(now()) @db.Timestamptz
+
+  company Company? @relation(fields: [company_id], references: [id])
+
+  @@map("subscriptions")
+}
+
+model Lead {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id String?   @db.Uuid
+  company_id String?   @db.Uuid
+  name       String
+  email      String
+  message    String?
+  status     String?   @default("new")
+  created_at DateTime? @default(now()) @db.Timestamptz
+
+  product Product? @relation(fields: [product_id], references: [id])
+  company Company? @relation(fields: [company_id], references: [id])
+
+  @@map("leads")
+}
+
+model Profile {
+  id            String    @id @db.Uuid
+  role          String    @default("company")
+  created_at    DateTime  @default(now()) @db.Timestamptz
+  email         String    @unique
+  name          String?
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("profiles")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+  user         Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model WidgetDeployment {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id String?   @db.Uuid
+  domain     String
+  status     String?   @default("pending")
+  added_by   String?   @db.Uuid
+  notes      String?
+  created_at DateTime? @default(now()) @db.Timestamptz
+
+  company Company? @relation(fields: [company_id], references: [id])
+
+  @@map("widget_deployments")
+}
+
+model PartnerSite {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  domain      String
+  api_key     String    @default(dbgenerated("(gen_random_uuid())::text"))
+  category_id String?   @db.Uuid
+  status      String?   @default("active")
+  added_by    String?   @db.Uuid
+  created_at  DateTime? @default(now()) @db.Timestamptz
+
+  category  Category?            @relation(fields: [category_id], references: [id])
+  companies PartnerSiteCompany[]
+
+  @@map("partner_sites")
+}
+
+model PartnerSiteCompany {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partner_site_id String?   @db.Uuid
+  company_id      String?   @db.Uuid
+  priority        Int?      @default(0)
+  created_at      DateTime? @default(now()) @db.Timestamptz
+
+  partnerSite PartnerSite? @relation(fields: [partner_site_id], references: [id])
+  company     Company?     @relation(fields: [company_id], references: [id])
+
+  @@map("partner_site_companies")
+}

@@ -1,6 +1,6 @@
 'use client' // ProductCard filter üçün lazımdır
 
-import Link from 'next/link'
+import { Link } from '@/lib/navigation';
 import { Badge } from './ui-kit'
 
 export function CompanyCard({ company }: {

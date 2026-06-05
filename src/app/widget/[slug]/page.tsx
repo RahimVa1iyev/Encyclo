@@ -1,16 +1,20 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { withTranslation } from "@/lib/prisma-locale";
+import { prisma } from '@/lib/db'
 
-export default async function WidgetPage(props: { params: Promise<{ slug: string }> }) {
+export default async function WidgetPage(props: { params: Promise<{ slug: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const params = await props.params;
-  const supabase = await createServerSupabaseClient()
-
+  const search = await props.searchParams;
+  const locale = (search?.locale as string) || "az";
   // 1. Şirkəti slug-a görə tap
-  const { data: company } = await supabase
-    .from('companies')
-    .select('id, slug, logo_url, translations:company_translations(*)')
-    .eq('slug', params.slug)
-    .eq('status', 'active')
-    .single()
+  const company = await prisma.company.findFirst({
+    where: { slug: params.slug, status: 'active' },
+    select: {
+      id: true,
+      slug: true,
+      logo_url: true,
+      translations: { ...withTranslation(locale), select: { name: true, locale: true } }
+    }
+  })
 
   if (!company) {
     return (
@@ -21,13 +25,14 @@ export default async function WidgetPage(props: { params: Promise<{ slug: string
   }
 
   // 2. Şirkətin məhsullarını çək
-  const { data: products } = await supabase
-    .from('products')
-    .select('*, translations:product_translations(*)')
-    .eq('company_id', company.id)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const products = await prisma.product.findMany({
+    where: { company_id: company.id, status: 'active' },
+    include: {
+      translations: withTranslation(locale)
+    },
+    orderBy: { created_at: 'desc' },
+    take: 5
+  })
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const companyName = company.translations?.find((t: any) => t.locale === 'az')?.name
@@ -49,7 +54,7 @@ export default async function WidgetPage(props: { params: Promise<{ slug: string
       </div>
 
       {products && products.length > 0 ? (
-        products.map((product) => {
+        products.map((product: any) => {
           const t = product.translations?.find((tr: any) => tr.locale === 'az') || product.translations?.[0]
           return (
             <a

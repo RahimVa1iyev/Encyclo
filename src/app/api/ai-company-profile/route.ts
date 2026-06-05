@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
 import { RateLimiter } from '@/lib/rate-limit'
 
 const rateLimiter = new RateLimiter(20, 60000)
@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Çox sayda sorğu göndərildi. Zəhmət olmasa biraz sonra yenidən cəhd edin.' }, { status: 429 })
   }
 
-  const supabase = await createServerSupabaseClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  const session = await auth()
+  const user = session?.user
 
-  if (authError || !user) {
+  if (!user) {
     return Response.json(
       { error: 'Giriş tələb olunur' },
       { status: 401 }

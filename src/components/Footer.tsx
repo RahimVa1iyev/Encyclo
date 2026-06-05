@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import { Link } from '@/lib/navigation';
+import { siteConfig } from '@/lib/config';
 
 export function Footer() {
   return (
@@ -39,6 +40,7 @@ export function Footer() {
             <li><Link href="/features" className="hover:text-accent transition-colors text-muted-foreground">Xüsusiyyətlər</Link></li>
             <li><Link href="/pricing" className="hover:text-accent transition-colors text-muted-foreground">Tariflər</Link></li>
             <li><Link href="/encyclopedia" className="hover:text-accent transition-colors text-muted-foreground">Ensiklopediya</Link></li>
+            <li><Link href="/categories" className="hover:text-accent transition-colors text-muted-foreground">Kateqoriyalar</Link></li>
           </ul>
         </div>
 
@@ -59,8 +61,8 @@ export function Footer() {
           </h4>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
             <li>
-              <a href="mailto:hello@encyclo.az" className="hover:text-accent transition-colors">
-                hello@encyclo.az
+              <a href={`mailto:hello@${siteConfig.url.replace(/^https?:\/\//, '').split(':')[0]}`} className="hover:text-accent transition-colors">
+                hello@{siteConfig.url.replace(/^https?:\/\//, '').split(':')[0]}
               </a>
             </li>
           </ul>

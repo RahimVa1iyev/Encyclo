@@ -1,9 +1,6 @@
+import { withTranslation } from "@/lib/prisma-locale";
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { prisma } from '@/lib/db';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app';
 
@@ -24,29 +21,28 @@ export async function GET(request: Request) {
     const key = searchParams.get('key');
     const url = searchParams.get('url');
     const title = searchParams.get('title');
+    const locale = searchParams.get('locale') || 'az';
 
     if (!key) {
       return NextResponse.json({ error: 'invalid_key' }, { status: 403, headers: corsHeaders });
     }
 
-    const { data: site, error: siteError } = await supabase
-      .from('partner_sites')
-      .select('id, name, domain, category_id')
-      .eq('api_key', key)
-      .eq('status', 'active')
-      .single();
+    const site = await prisma.partnerSite.findFirst({
+      where: { api_key: key, status: 'active' },
+      select: { id: true, name: true, domain: true, category_id: true }
+    });
 
-    if (siteError || !site) {
+    if (!site) {
       return NextResponse.json({ error: 'invalid_key' }, { status: 403, headers: corsHeaders });
     }
 
-    const { data: partnerCompanies } = await supabase
-      .from('partner_site_companies')
-      .select('company_id, priority')
-      .eq('partner_site_id', site.id)
-      .order('priority', { ascending: false });
+    const partnerCompanies = await prisma.partnerSiteCompany.findMany({
+      where: { partner_site_id: site.id },
+      select: { company_id: true, priority: true },
+      orderBy: { priority: 'desc' }
+    });
 
-    const eligibleCompanyIds = partnerCompanies?.map(pc => pc.company_id) || [];
+    const eligibleCompanyIds = (partnerCompanies?.map(pc => pc.company_id).filter(Boolean) as string[]) || [];
 
     if (eligibleCompanyIds.length === 0) {
       return NextResponse.json({
@@ -84,15 +80,17 @@ export async function GET(request: Request) {
     let matchMethod = 'none';
 
     if (uniqueSignals.length > 0) {
-      const { data: keywordMatches, error: kwError } = await supabase
-        .from('category_keywords')
-        .select('category_id, weight')
-        .in('keyword', uniqueSignals);
+      const keywordMatches = await prisma.categoryKeyword.findMany({
+        where: { keyword: { in: uniqueSignals }, locale },
+        select: { category_id: true, weight: true }
+      });
 
       if (keywordMatches && keywordMatches.length > 0) {
         const scores: Record<string, number> = {};
         keywordMatches.forEach(k => {
-          scores[k.category_id] = (scores[k.category_id] || 0) + k.weight;
+          if (k.category_id) {
+            scores[k.category_id] = (scores[k.category_id] || 0) + (k.weight || 1);
+          }
         });
 
         const topEntry = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
@@ -101,11 +99,10 @@ export async function GET(request: Request) {
           matchedCategoryId = topEntry[0];
           matchMethod = 'keyword';
 
-          const { data: cat } = await supabase
-            .from('categories')
-            .select('name')
-            .eq('id', matchedCategoryId)
-            .single();
+          const cat = await prisma.category.findUnique({
+            where: { id: matchedCategoryId },
+            select: { name: true }
+          });
           matchedCategoryName = cat?.name || null;
         }
       }
@@ -113,9 +110,9 @@ export async function GET(request: Request) {
 
     if (!matchedCategoryId) {
       try {
-        const { data: allCategories } = await supabase
-          .from('categories')
-          .select('id, name');
+        const allCategories = await prisma.category.findMany({
+          select: { id: true, name: true }
+        });
 
         const categoryNames = allCategories?.map(c => c.name).join(', ') || '';
         const searchTitle = title ? decodeURIComponent(title) : '';
@@ -164,42 +161,46 @@ export async function GET(request: Request) {
       matchedCategoryId = site.category_id;
       matchMethod = 'default';
 
-      const { data: cat } = await supabase
-        .from('categories')
-        .select('name')
-        .eq('id', site.category_id)
-        .single();
+      const cat = await prisma.category.findUnique({
+        where: { id: site.category_id },
+        select: { name: true }
+      });
       matchedCategoryName = cat?.name || null;
     }
 
 
 
-    let productsQuery = supabase
-      .from('products')
-      .select(`
-        id, slug, images, views, category_id,
-        product_translations!inner(name, description, locale),
-        companies!inner(slug, company_translations!inner(name, locale))
-      `)
-      .in('company_id', eligibleCompanyIds)
-      .eq('status', 'active')
-      .eq('product_translations.locale', 'az')
-      .order('views', { ascending: false })
-      .limit(6);
-
-    if (matchedCategoryId) {
-      productsQuery = productsQuery.eq('category_id', matchedCategoryId);
-    }
-
-    const { data: productsData, error: productsError } = await productsQuery;
+    const productsData = await prisma.product.findMany({
+      where: {
+        company_id: { in: eligibleCompanyIds },
+        status: 'active',
+        ...(matchedCategoryId ? { category_id: matchedCategoryId } : {})
+      },
+      select: {
+        id: true,
+        slug: true,
+        images: true,
+        views: true,
+        category_id: true,
+        translations: { ...withTranslation(locale), select: { name: true, description: true, locale: true } },
+        company: {
+          select: {
+            slug: true,
+            translations: { ...withTranslation(locale), select: { name: true, locale: true } }
+          }
+        }
+      },
+      orderBy: { views: 'desc' },
+      take: 6
+    });
 
     const formattedProducts = (productsData || []).map((p: any) => ({
       slug: p.slug,
-      name: p.product_translations?.[0]?.name || '',
-      description: p.product_translations?.[0]?.description || '',
+      name: p.translations?.[0]?.name || '',
+      description: p.translations?.[0]?.description || '',
       image: p.images?.[0] || null,
-      company_name: p.companies?.company_translations?.[0]?.name || '',
-      company_slug: p.companies?.slug || '',
+      company_name: p.company?.translations?.[0]?.name || '',
+      company_slug: p.company?.slug || '',
       url: `${SITE_URL}/products/${p.slug}`
     }));
 

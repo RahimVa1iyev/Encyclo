@@ -1,136 +1,103 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
+import { NextResponse } from "next/server";
+import createMiddleware from 'next-intl/middleware';
+import { locales, defaultLocale } from '../next-intl.config';
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+const { auth } = NextAuth(authConfig);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
-      },
-    }
-  )
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'always'
+});
 
-  const { data: { user } } = await supabase.auth.getUser()
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
 
-  const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
-  const isOnboarding = request.nextUrl.pathname.startsWith('/onboarding')
-  const isLogin = request.nextUrl.pathname.startsWith('/login')
-  const isRegister = request.nextUrl.pathname.startsWith('/register')
-  const isAdmin = request.nextUrl.pathname.startsWith('/admin')
+  // 1. Skip middleware for static files and API routes
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next();
+  }
+
+  // 2. Run intl middleware first (handles locale redirect)
+  const intlResponse = intlMiddleware(req);
+  
+  // 3. If intl redirected (added locale prefix), return that redirect
+  if (intlResponse.status !== 200 && intlResponse.headers.get('x-middleware-rewrite') === null) {
+    return intlResponse;
+  }
+
+  // 4. Extract locale from pathname AFTER intl processing
+  const locale = pathname.split('/')[1] || defaultLocale;
+
+  // 5. Run existing auth/role checks
+  const user = req.auth?.user;
+  
+  // Determine route types (now including locale prefix)
+  const isDashboard = pathname.startsWith(`/${locale}/dashboard`);
+  const isOnboarding = pathname.startsWith(`/${locale}/onboarding`);
+  const isLogin = pathname.startsWith(`/${locale}/login`) || pathname.startsWith(`/${locale}/auth/login`);
+  const isRegister = pathname.startsWith(`/${locale}/register`) || pathname.startsWith(`/${locale}/auth/register`);
+  const isAdmin = pathname.startsWith(`/${locale}/admin`);
 
   // Not logged in — protect dashboard, onboarding, and admin
   if (!user && (isDashboard || isOnboarding || isAdmin)) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL(`/${locale}/login`, req.url));
   }
 
-if (user) {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  if (user) {
+    const role = (user as any).role ?? 'company';
+    const onboardingCompleted = (user as any).onboarding_completed;
 
-  const role = profile?.role ?? 'company'
+    console.log('[MIDDLEWARE]', {
+      pathname,
+      role,
+      onboardingCompleted,
+      isAdmin,
+      isDashboard,
+      isOnboarding,
+      isLogin,
+      isRegister,
+    })
 
+    // Set header for downstream components onto the intlResponse
+    intlResponse.headers.set('x-user-role', role);
 
-  // Read role once and store in header to minimize DB calls in downstream Server Components
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-user-role', role)
+    if (role === 'superadmin') {
+      if (isDashboard || isOnboarding || isLogin || isRegister || pathname === `/${locale}`) {
+        return NextResponse.redirect(new URL(`/${locale}/admin`, req.url));
+      }
+      return intlResponse;
+    } else {
+      // Company routing
+      if (isAdmin) {
+        return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+      }
 
-  const finalResponse = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
+      if (isDashboard) {
+        if (!onboardingCompleted) {
+          return NextResponse.redirect(new URL(`/${locale}/onboarding`, req.url));
+        }
+      }
 
-  // Preserve any cookies set by supabase.auth.getUser()
-  response.cookies.getAll().forEach((cookie) => {
-    finalResponse.cookies.set(cookie.name, cookie.value)
-  })
-  
-  response = finalResponse
-
-  if (role === 'superadmin') {
-    // Superadmin strict routing: keep them in /admin
-    if (isDashboard || isOnboarding || isLogin || isRegister) {
-      return NextResponse.redirect(new URL('/admin', request.url))
-    }
-    return response
-  } else {
-    // Company routing
-    if (isAdmin) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-
-    if (isDashboard) {
-      const onboardingCompleted = user.user_metadata?.onboarding_completed
-      if (!onboardingCompleted) {
-        return NextResponse.redirect(new URL('/onboarding', request.url))
+      if (isLogin || isRegister) {
+        return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
       }
     }
 
-    if (isLogin || isRegister) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
+    return intlResponse;
   }
-}
 
-return response
-}
+  return intlResponse;
+});
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-}
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)',
+  ]
+};

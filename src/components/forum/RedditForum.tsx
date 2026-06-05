@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react'
+import { addForumPostAction, getForumPostsAction } from './actions'
 import { Send, Loader2, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Post {
@@ -21,7 +21,6 @@ interface ReplyFormProps {
 }
 
 function ReplyForm({ parentId, productId, onSuccess, onCancel }: ReplyFormProps) {
-  const supabase = useMemo(() => createClient(), [])
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,17 +35,7 @@ function ReplyForm({ parentId, productId, onSuccess, onCancel }: ReplyFormProps)
     setLoading(true)
     setError('')
     try {
-      const { error: insertError } = await supabase
-        .from('forum_posts')
-        .insert({
-          product_id: productId,
-          user_id: null,
-          author_name: name.trim(),
-          content: content.trim(),
-          is_faq: false,
-          parent_id: parentId,
-        })
-      if (insertError) throw insertError
+      await addForumPostAction(productId, name.trim(), content.trim(), parentId);
       setName('')
       setContent('')
       onSuccess()
@@ -213,7 +202,6 @@ interface RedditForumProps {
 }
 
 export default function RedditForum({ productId, initialPosts }: RedditForumProps) {
-  const supabase = useMemo(() => createClient(), [])
   const [posts, setPosts] = useState<Post[]>([])
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
@@ -247,17 +235,12 @@ export default function RedditForum({ productId, initialPosts }: RedditForumProp
 
   useEffect(() => {
     processPosts(initialPosts)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPosts])
 
   async function refresh() {
-    const { data } = await supabase
-      .from('forum_posts')
-      .select('id, author_name, content, created_at, parent_id')
-      .eq('product_id', productId)
-      .eq('is_faq', false)
-      .order('created_at', { ascending: true })
-
-    if (data) processPosts(data as Post[])
+    const data = await getForumPostsAction(productId);
+    if (data) processPosts(data as unknown as Post[])
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -273,17 +256,7 @@ export default function RedditForum({ productId, initialPosts }: RedditForumProp
     setLoading(true)
     setError('')
     try {
-      const { error: insertError } = await supabase
-        .from('forum_posts')
-        .insert({
-          product_id: productId,
-          user_id: null,
-          author_name: name.trim(),
-          content: content.trim(),
-          is_faq: false,
-          parent_id: null,
-        })
-      if (insertError) throw insertError
+      await addForumPostAction(productId, name.trim(), content.trim(), null);
       setSuccess(true)
       setName('')
       setContent('')

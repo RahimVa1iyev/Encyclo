@@ -1,0 +1,103 @@
+{
+  "meta": {
+    "home": {
+      "title": "Encyclo — Azerbaijan's AI Search Catalog",
+      "description": "Make your products and services discoverable by AI search engines like ChatGPT and Perplexity."
+    },
+    "encyclopedia": {
+      "title": "Encyclopedia — All Products | Encyclo",
+      "description": "AI-optimized product catalog of Azerbaijani companies."
+    },
+    "features": {
+      "title": "Features | Encyclo",
+      "description": "Full platform features designed for GEO and SEO optimization."
+    },
+    "auth": {
+      "login": {
+        "title": "Login | Encyclo",
+        "description": "Sign in to the Encyclo platform."
+      },
+      "register": {
+        "title": "Register | Encyclo",
+        "description": "Register your company on Encyclo."
+      }
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "encyclopedia": "Encyclopedia",
+    "features": "Features",
+    "pricing": "Pricing",
+    "about": "About",
+    "product": "Product",
+    "company": "Company",
+    "contact": "Contact"
+  },
+  "landing": {
+    "badge": "Azerbaijan's first GEO platform",
+    "title_start": "Make your product visible in ",
+    "title_highlight": "ChatGPT",
+    "title_end": "",
+    "description": "Publish your company's products in a structured encyclopedia format. Let ChatGPT, Perplexity, and Google AI recommend you directly to your users.",
+    "register_cta": "Register",
+    "encyclopedia_cta": "Browse Encyclopedia",
+    "stats_companies": "Active companies",
+    "stats_products": "Active products"
+  },
+  "features": {
+    "badge": "Platform Features",
+    "title": "Prepare your products for AI search",
+    "description": "Encyclo is not just an encyclopedia — it's a GEO platform that makes Azerbaijani companies' products visible in AI search engines."
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Complete your company profile",
+      "name_label": "Company name",
+      "category_label": "Category",
+      "website_label": "Website (Optional)",
+      "desc_label": "Description",
+      "ai_read_badge": "AI reads this 🤖",
+      "ai_button": "Write with AI"
+    },
+    "step2": {
+      "title": "Add your logo",
+      "upload_hint": "Click or drag to upload logo",
+      "skip": "Skip for now"
+    },
+    "step3": {
+      "title": "Everything is ready!",
+      "summary": "Summary",
+      "subtitle": "Appear in AI search by adding your first product",
+      "finish": "Go to Dashboard"
+    }
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "add_content": "Add Product",
+      "company": "Company Profile",
+      "forum": "Forum & FAQ",
+      "leads": "Leads",
+      "reports": "Reports",
+      "distribution": "Distribution",
+      "ai_content": "AI Content",
+      "billing": "Billing",
+      "coming_soon": "Coming Soon"
+    },
+    "topbar": {
+      "search": "Search..."
+    }
+  },
+  "common": {
+    "next": "Next",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalid_email": "Invalid email format",
+    "ai_error": "Could not generate description with AI"
+  }
+}

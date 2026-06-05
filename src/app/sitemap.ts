@@ -1,39 +1,37 @@
-import { createPublicSupabaseClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/db'
 
 export default async function sitemap() {
-  const supabase = createPublicSupabaseClient()
-
   const [
-    { data: companies },
-    { data: products },
-    { data: categories },
+    companies,
+    products,
+    categories,
   ] = await Promise.all([
-    supabase
-      .from('companies')
-      .select('slug, created_at, updated_at')
-      .eq('status', 'active'),
-    supabase
-      .from('products')
-      .select('slug, created_at, updated_at')
-      .eq('status', 'active'),
-    supabase
-      .from('categories')
-      .select('slug, created_at'),
+    prisma.company.findMany({
+      where: { status: 'active' },
+      select: { slug: true, created_at: true }
+    }),
+    prisma.product.findMany({
+      where: { status: 'active' },
+      select: { slug: true, created_at: true }
+    }),
+    prisma.category.findMany({
+      select: { slug: true, created_at: true }
+    }),
   ])
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'
 
-  const companyUrls = (companies || []).map(c => ({
+  const companyUrls = companies.map((c: any) => ({
     url: `${baseUrl}/companies/${c.slug}`,
-    lastModified: c.updated_at || c.created_at,
+    lastModified: c.created_at,
   }))
 
-  const productUrls = (products || []).map(p => ({
+  const productUrls = products.map((p: any) => ({
     url: `${baseUrl}/products/${p.slug}`,
-    lastModified: p.updated_at || p.created_at,
+    lastModified: p.created_at,
   }))
 
-  const categoryUrls = (categories || []).map(c => ({
+  const categoryUrls = categories.map((c: any) => ({
     url: `${baseUrl}/categories/${c.slug}`,
     lastModified: c.created_at,
   }))
@@ -43,6 +41,7 @@ export default async function sitemap() {
     { url: `${baseUrl}/encyclopedia`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.9 },
     { url: `${baseUrl}/companies`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.8 },
     { url: `${baseUrl}/products`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.8 },
+    { url: `${baseUrl}/categories`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.7 },
     { url: `${baseUrl}/features`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.6 },
     { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.6 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.5 },

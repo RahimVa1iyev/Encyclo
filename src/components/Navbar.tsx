@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from '@/lib/navigation';
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { ThemeSwitcher } from './ThemeSwitcher'

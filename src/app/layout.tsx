@@ -1,13 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { DM_Sans } from 'next/font/google'
 import "./globals.css";
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--font-dm-sans',
-})
 
 // TODO: Add public/og-default.png (1200x630px) for default social share image
 
@@ -24,7 +17,7 @@ export const metadata: Metadata = {
     siteName: "Encyclo",
     title: "Encyclo — Azərbaycanın Biznes Ensiklopediyası",
     description: "Azərbaycan şirkətlərini, məhsullarını və xidmətlərini kəşf edin.",
-
+    images: [{ url: '/og-default.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
@@ -48,15 +41,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="az" className={dmSans.variable} style={{ scrollBehavior: 'smooth' }} suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('encyclo-theme');if(!t||!['slate','indigo','ocean','forest'].includes(t))t='slate';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','slate');}})();`
-          }}
-        />
-      </head>
-      <body className={dmSans.className}>{children}</body>
+    <html suppressHydrationWarning>
+      <body>{children}</body>
     </html>
   );
 }

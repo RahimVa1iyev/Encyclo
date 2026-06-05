@@ -1,0 +1,103 @@
+{
+  "meta": {
+    "home": {
+      "title": "Encyclo — Azərbaycanın AI Axtarış Kataloqu",
+      "description": "Şirkətlərin məhsul və xidmətlərini ChatGPT, Perplexity kimi AI axtarış mühərriklərinə görünən edin."
+    },
+    "encyclopedia": {
+      "title": "Ensiklopediya — Bütün Məhsullar | Encyclo",
+      "description": "Azərbaycan şirkətlərinin AI-optimizasiya edilmiş məhsul kataloqu."
+    },
+    "features": {
+      "title": "Xüsusiyyətlər | Encyclo",
+      "description": "GEO və SEO üçün nəzərdə tutulmuş tam platforma xüsusiyyətləri."
+    },
+    "auth": {
+      "login": {
+        "title": "Daxil ol | Encyclo",
+        "description": "Encyclo platformasına daxil olun."
+      },
+      "register": {
+        "title": "Qeydiyyat | Encyclo", 
+        "description": "Şirkətinizi Encyclo-da qeydiyyatdan keçirin."
+      }
+    }
+  },
+  "nav": {
+    "home": "Ana Səhifə",
+    "encyclopedia": "Ensiklopediya",
+    "features": "Xüsusiyyətlər",
+    "pricing": "Tariflər",
+    "about": "Haqqında",
+    "product": "Məhsul",
+    "company": "Şirkət",
+    "contact": "Əlaqə"
+  },
+  "landing": {
+    "badge": "Azərbaycanın ilk GEO platforması",
+    "title_start": "Məhsulunuz ",
+    "title_highlight": "ChatGPT-də",
+    "title_end": " görünsün",
+    "description": "Şirkətinizin məhsullarını strukturlaşdırılmış ensiklopediya formatında yayımlayın. ChatGPT, Perplexity və Google AI istifadəçilərinizə sizi birbaşa tövsiyə etsin.",
+    "register_cta": "Qeydiyyat ol",
+    "encyclopedia_cta": "Ensiklopediyaya bax",
+    "stats_companies": "Aktiv şirkət",
+    "stats_products": "Aktiv məhsul"
+  },
+  "features": {
+    "badge": "Platforma Xüsusiyyətləri",
+    "title": "Məhsullarınızı AI axtarışa hazırlayın",
+    "description": "Encyclo yalnız ensiklopediya deyil — Azərbaycan şirkətlərinin məhsullarını AI axtarış sistemlərində görünən hala gətirən GEO platformasıdır."
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Şirkət profilini tamamlayın",
+      "name_label": "Şirkət adı",
+      "category_label": "Kateqoriya",
+      "website_label": "Vebsayt (İstəyə bağlı)",
+      "desc_label": "Təsvir",
+      "ai_read_badge": "AI oxuyur 🤖",
+      "ai_button": "AI ilə yaz"
+    },
+    "step2": {
+      "title": "Logonuzu əlavə edin",
+      "upload_hint": "Logo yükləmək üçün klikləyin və ya sürükləyin",
+      "skip": "Sonraya saxla"
+    },
+    "step3": {
+      "title": "Hər şey hazırdır!",
+      "summary": "Xülasə",
+      "subtitle": "İlk məhsulunuzu əlavə edərək AI axtarışda görünün",
+      "finish": "Dashboarda keç"
+    }
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "products": "Məhsullar",
+      "add_content": "Məhsul əlavə et",
+      "company": "Şirkət profili",
+      "forum": "Forum & FAQ",
+      "leads": "Müraciətlər",
+      "reports": "Hesabatlar",
+      "distribution": "Yayım",
+      "ai_content": "AI Məzmun",
+      "billing": "Billing",
+      "coming_soon": "Tezliklə"
+    },
+    "topbar": {
+      "search": "Axtar..."
+    }
+  },
+  "common": {
+    "next": "Növbəti",
+    "save": "Yadda saxla",
+    "cancel": "Ləğv et",
+    "loading": "Yüklənir..."
+  },
+  "errors": {
+    "required": "Bu xana mütləqdir",
+    "invalid_email": "Yanlış email formatı",
+    "ai_error": "AI ilə təsvir yaradıla bilmədi"
+  }
+}

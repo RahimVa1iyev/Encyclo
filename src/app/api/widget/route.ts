@@ -1,4 +1,5 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { withTranslation } from "@/lib/prisma-locale";
+import { prisma } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
 import { PLAN_LIMITS } from '@/lib/constants/plans'
 
@@ -7,9 +8,8 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category')
   let limit = Math.min(parseInt(searchParams.get('limit') || '5') || 5, 20)
   const type = searchParams.get('type') // 'companies' | 'products'
+  const locale = searchParams.get('locale') || 'az';
   const companyId = searchParams.get('company_id') || searchParams.get('company')
-
-  const supabase = await createServerSupabaseClient()
 
   // 1. Domain whitelist check
   const referer = request.headers.get('referer') || request.headers.get('origin')
@@ -21,17 +21,15 @@ export async function GET(request: NextRequest) {
       const parts = url.hostname.split('.')
       const rootDomain = parts.length >= 2 ? parts.slice(-2).join('.') : url.hostname
 
-      let deploymentQuery = supabase
-        .from('widget_deployments')
-        .select('company_id')
-        .eq('domain', rootDomain)
-        .eq('status', 'active')
-
-      if (activeCompanyId) {
-        deploymentQuery = deploymentQuery.eq('company_id', activeCompanyId)
-      }
-
-      const { data: deployments } = await deploymentQuery.limit(1)
+      const deployments = await prisma.widgetDeployment.findMany({
+        where: {
+          domain: rootDomain,
+          status: 'active',
+          ...(activeCompanyId && { company_id: activeCompanyId })
+        },
+        select: { company_id: true },
+        take: 1
+      })
 
       if (!deployments || deployments.length === 0) {
         return NextResponse.json(
@@ -52,12 +50,13 @@ export async function GET(request: NextRequest) {
   let isScale = false
 
   if (activeCompanyId) {
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('plan')
-      .eq('company_id', activeCompanyId)
-      .eq('status', 'active')
-      .maybeSingle()
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        company_id: activeCompanyId,
+        status: 'active'
+      },
+      select: { plan: true }
+    })
 
     const planType = (subscription?.plan || 'starter') as keyof typeof PLAN_LIMITS
     planLimit = PLAN_LIMITS[planType]?.products || 5
@@ -70,66 +69,72 @@ export async function GET(request: NextRequest) {
   limit = isScale ? limit : Math.min(limit, planLimit)
 
   if (type === 'products') {
-    let query = supabase
-      .from('products')
-      .select(`
-        id, slug, images, type, status,
-        translations:product_translations(name, description, features, locale),
-        company:companies(slug, logo_url, translations:company_translations(name))
-      `)
-      .eq('status', 'active')
-      .eq('translations.locale', 'az')
-      .order('created_at', { ascending: false })
+    try {
+      const data = await prisma.product.findMany({
+        where: {
+          status: 'active',
+          translations: { some: { locale: 'az' } },
+          ...(activeCompanyId && { company_id: activeCompanyId })
+        },
+        select: {
+          id: true, slug: true, images: true, type: true, status: true,
+          translations: { ...withTranslation(locale), select: { name: true, description: true, features: true, locale: true } },
+          company: {
+            select: {
+              slug: true, logo_url: true,
+              translations: { ...withTranslation(locale), select: { name: true } }
+            }
+          }
+        },
+        orderBy: { created_at: 'desc' },
+        ...( !isScale && { take: limit } )
+      })
+      
+      return NextResponse.json({ data, type: 'products' }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, s-maxage=60',
+        }
+      })
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+  }
 
-    if (activeCompanyId) {
-      query = query.eq('company_id', activeCompanyId)
+  // Default: companies
+  try {
+    let categoryId = undefined;
+    if (category) {
+      const cat = await prisma.category.findUnique({
+        where: { slug: category },
+        select: { id: true }
+      })
+      if (cat) categoryId = cat.id;
     }
 
-    if (!isScale) {
-      query = query.limit(limit)
-    }
+    const data = await prisma.company.findMany({
+      where: {
+        status: 'active',
+        ...(categoryId && { category_id: categoryId })
+      },
+      select: {
+        id: true, slug: true, logo_url: true, website: true,
+        translations: { ...withTranslation(locale), select: { name: true, description: true, locale: true } },
+        category: { select: { name: true, slug: true } }
+      },
+      orderBy: { created_at: 'desc' },
+      take: limit
+    })
 
-    const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    
-    return NextResponse.json({ data, type: 'products' }, {
+    return NextResponse.json({ data, type: 'companies' }, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, s-maxage=60',
       }
     })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
-
-  // Default: companies
-  let query = supabase
-    .from('companies')
-    .select(`
-      id, slug, logo_url, website,
-      translations:company_translations(name, description, locale),
-      category:categories(name, slug)
-    `)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
-    .limit(limit) // limits are not applied strictly to companies according to prompt, just requested limit
-
-  if (category) {
-    const { data: cat } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('slug', category)
-      .single()
-    if (cat) query = query.eq('category_id', cat.id)
-  }
-
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ data, type: 'companies' }, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'public, s-maxage=60',
-    }
-  })
 }
 
 export async function OPTIONS() {

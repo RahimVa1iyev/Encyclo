@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
 import { RateLimiter } from '@/lib/rate-limit'
 
 const rateLimiter = new RateLimiter(20, 60000)
@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Çoxlu sorğu göndərilib, bir az gözləyin' }, { status: 429 });
   }
 
-  const supabase = await createServerSupabaseClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  const session = await auth()
+  const user = session?.user
 
-  if (authError || !user) {
+  if (!user) {
     return Response.json(
       { error: 'Giriş tələb olunur' },
       { status: 401 }
@@ -53,23 +53,29 @@ export async function POST(request: NextRequest) {
     const needsTranslation = targetLocales.includes('en') || targetLocales.includes('ru');
 
     const systemPrompt = needsTranslation
-      ? `You are a professional technical translator specializing in Azerbaijani business content.
-You will receive a GEO-optimized Azerbaijani product description.
+      ? `You are a professional technical translator for Azerbaijani business content.
 
-TASK: Translate it into the requested languages. Do NOT optimize or rewrite — translate only.
+TASK: Translate the product name and description into the requested language(s).
 
-STRICT RULES:
-- Preserve the question-answer structure exactly
-- Keep the product name untranslated (do not translate proper nouns)
-- Use professional business language in each target language
-- Output ONLY valid JSON, no markdown, no explanation, no code fences
-- Include only the requested language keys
+TRANSLATION RULES:
+- Translate EVERYTHING into the target language — including the product subtitle
+- Keep ONLY the brand name untranslated (e.g. "Hesab Pro" stays as "Hesab Pro")
+- But translate descriptive parts (e.g. "Onlayn Mühasibat Proqramı" → "Online Accounting Software")
+- Preserve the question-answer text structure exactly
+- The "description" value MUST be a single plain text string with \\n for line breaks
+- Use natural, professional business language
+- Do NOT add or remove any information — translate only
 
-OUTPUT FORMAT:
+OUTPUT FORMAT — ONLY valid JSON, no markdown:
 {
-  "en": { "name": "...", "description": "..." },
-  "ru": { "name": "...", "description": "..." }
-}`
+  "en": {
+    "name": "Hesab Pro — Online Accounting Software",
+    "description": "What is Hesab Pro — Online Accounting Software?\\nHesab Pro is an online accounting program...\\n\\nWhat problem does it solve?\\n...",
+    "keywords": ["online accounting software Baku", "cheap accounting program Azerbaijan"]
+  }
+}
+
+CRITICAL: "description" must be a FLAT STRING, never a nested object.`
       : `You are a GEO (Generative Engine Optimization) specialist for Azerbaijani business products.
 You have two tasks:
 TASK 1 — Category Analysis (internal, do not output this):
@@ -126,6 +132,9 @@ STRICT RULES:
 Tərcümə ediləcək mətn (Azərbaycan dilindən):
 ${description}
 
+Açar sözlər (Azərbaycan dilindən tərcümə et):
+${Array.isArray(tags) && tags.length > 0 ? tags.join(', ') : 'yoxdur'}
+
 Tələb olunan dillər: ${targetLocales.join(', ')}`
       : `Product name: ${name}
 Category: ${category || 'göstərilməyib'}
@@ -145,7 +154,7 @@ ${description}`;
         },
         body: JSON.stringify({
           model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          max_tokens: 1000,
+          max_tokens: needsTranslation ? 2000 : 1000,
           messages: [
             {
               role: "system",
@@ -174,7 +183,8 @@ ${description}`;
         const parsedData = JSON.parse(cleanJson);
         return NextResponse.json({ translations: parsedData });
       } catch (e) {
-        return NextResponse.json({ error: 'Tərcümə nəticəsi oxuna bilmədi' }, { status: 500 });
+        console.error('Translation JSON parse error. Raw content:', content.slice(0, 500));
+        return NextResponse.json({ error: 'Tərcümə nəticəsi oxuna bilmədi. Yenidən cəhd edin.' }, { status: 500 });
       }
     }
 

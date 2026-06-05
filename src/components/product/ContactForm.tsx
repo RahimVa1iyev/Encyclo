@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
+import { submitContactFormAction } from './actions'
 import { Send, CheckCircle, Loader2 } from 'lucide-react'
 
 interface ContactFormProps {
@@ -11,7 +11,6 @@ interface ContactFormProps {
 }
 
 export default function ContactForm({ productId, companyId, productName }: ContactFormProps) {
-  const supabase = useMemo(() => createClient(), [])
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
@@ -33,16 +32,7 @@ export default function ContactForm({ productId, companyId, productName }: Conta
     setLoading(true)
     setError('')
     try {
-      const { error: insertError } = await supabase
-        .from('leads')
-        .insert({
-          product_id: productId,
-          company_id: companyId,
-          name: name.trim(),
-          email: email.trim(),
-          message: message.trim() || null,
-        })
-      if (insertError) throw insertError
+      await submitContactFormAction(productId, companyId, name.trim(), email.trim(), message.trim());
       setSuccess(true)
     } catch (err: unknown) {
       setError('Xəta baş verdi. Yenidən cəhd edin.')

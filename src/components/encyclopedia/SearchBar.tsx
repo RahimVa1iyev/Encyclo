@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Building2, Package, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Link } from '@/lib/navigation';
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
