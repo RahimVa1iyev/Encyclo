@@ -105,7 +105,7 @@ export default function MyProductsPage() {
     try {
       const { updateProductStatus } = await import('../../actions');
       await updateProductStatus(productId, newStatus);
-      setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: newStatus } : p));
+      setProducts(prev => prev.map((p: any) => p.id === productId ? { ...p, status: newStatus } : p));
       toast.success(newStatus === "active" ? "Məhsul aktiv edildi" : "Məhsul qaralamaya alındı");
     } catch { 
       toast.error("Statusu yeniləyərkən xəta baş verdi"); 

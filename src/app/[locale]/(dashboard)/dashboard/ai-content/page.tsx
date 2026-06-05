@@ -103,11 +103,11 @@ export default function AIContentPage() {
       await updateProductTranslationDescAction(selectedProductId, 'az', optimizedDescription);
 
       // Update local state
-      setProducts(prev => prev.map(p => {
+      setProducts(prev => prev.map((p: any) => {
         if (p.id === selectedProductId) {
           return {
             ...p,
-            translations: p.translations.map(t => 
+            translations: p.translations.map((t: any) => 
               t.locale === 'az' ? { ...t, description: optimizedDescription } : t
             )
           };

@@ -142,7 +142,7 @@ export function WidgetsClient({ deployments, companies }: { deployments: Deploym
               </tr>
             </thead>
             <tbody>
-              {filteredDeployments.map(dep => {
+              {filteredDeployments.map((dep: any) => {
                 const comp = Array.isArray(dep.companies) ? dep.companies[0] : dep.companies
                 const companyName = comp?.company_translations?.[0]?.name || 'Unknown'
                 return (
@@ -225,7 +225,7 @@ export function WidgetsClient({ deployments, companies }: { deployments: Deploym
                   onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
                 >
                   <option value="" disabled>Şirkət seçin</option>
-                  {companies.map(c => (
+                  {companies.map((c: any) => (
                     <option key={c.id} value={c.id}>
                       {c.company_translations?.[0]?.name || c.id}
                     </option>

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const answersText = answers
       .filter(a => a.answer.trim())
-      .map(a => `Sual: ${a.question}\nCavab: ${a.answer}`)
+      .map((a: any) => `Sual: ${a.question}\nCavab: ${a.answer}`)
       .join('\n\n')
 
     const systemPrompt = `Sən Azərbaycan bazarı üçün GEO (Generative Engine Optimization) ekspertisən.

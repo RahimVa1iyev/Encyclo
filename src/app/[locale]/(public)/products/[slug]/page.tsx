@@ -131,7 +131,7 @@ export default async function ProductPage(props: { params: Promise<{ slug: strin
     })
   ])
 
-  const serializedPosts = latestPosts.map(p => ({
+  const serializedPosts = latestPosts.map((p: any) => ({
     ...p,
     created_at: p.created_at ? p.created_at.toISOString() : new Date().toISOString()
   }));

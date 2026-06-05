@@ -433,7 +433,7 @@ export default function EditProductPage() {
         .filter(([_, content]) => content.name.trim().length > 0)
         .map(([locale]) => locale);
 
-      const translationsToSave = validLocales.map(locale => {
+      const translationsToSave = validLocales.map((locale: any) => {
         const content = contentByLocale[locale];
         return {
           locale: locale,

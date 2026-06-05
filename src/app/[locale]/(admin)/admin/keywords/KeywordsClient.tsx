@@ -80,14 +80,14 @@ export default function KeywordsClient({ categories }: { categories: Category[] 
           <AlertTriangle size={20} style={{ marginTop: '2px', flexShrink: 0 }} />
           <div style={{ fontSize: '14px' }}>
             <p style={{ fontWeight: 600, margin: '0 0 4px 0' }}>⚠️ Bu kateqoriyaların keyword-i yoxdur:</p>
-            <p style={{ margin: '0 0 4px 0' }}>{emptyCategories.map(c => c.name).join(', ')}</p>
+            <p style={{ margin: '0 0 4px 0' }}>{emptyCategories.map((c: any) => c.name).join(', ')}</p>
             <p style={{ margin: 0 }}>Widget bu kateqoriyalarda məhsul tapa bilməyəcək.</p>
           </div>
         </div>
       )}
 
       <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
-        {sortedCategories.map(category => (
+        {sortedCategories.map((category: any) => (
           <CategoryCard key={category.id} category={category} />
         ))}
       </div>
@@ -170,7 +170,7 @@ function CategoryCard({ category }: { category: Category }) {
   const handleGenerateAI = async () => {
     try {
       setIsLoadingAI(true)
-      const existing = category.categoryKeywords.map(k => k.keyword)
+      const existing = category.categoryKeywords.map((k: any) => k.keyword)
       const results = await generateKeywordsAI(category.name, existing)
       setSuggestions(results)
     } catch (err: any) {
@@ -278,7 +278,7 @@ function CategoryCard({ category }: { category: Category }) {
           <p style={{ fontSize: '13px', color: 'var(--muted-foreground)', textAlign: 'center', margin: 0, padding: '16px 0' }}>Keyword yoxdur — aşağıdan əlavə edin</p>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {category.categoryKeywords.sort((a, b) => b.weight - a.weight).map(k => (
+            {category.categoryKeywords.sort((a, b) => b.weight - a.weight).map((k: any) => (
               <KeywordPill key={k.id} keyword={k} onRemove={() => handleRemove(k.id)} />
             ))}
           </div>

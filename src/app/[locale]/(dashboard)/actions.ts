@@ -413,7 +413,7 @@ export async function saveMultipleFAQsAction(productId: string, faqs: any[]) {
   const user = session?.user;
   if (!user) throw new Error("Unauthorized");
 
-  const dataToInsert = faqs.map(faq => ({
+  const dataToInsert = faqs.map((faq: any) => ({
     product_id: productId,
     user_id: user.id,
     content: faq.answer,
@@ -425,7 +425,7 @@ export async function saveMultipleFAQsAction(productId: string, faqs: any[]) {
   // but since we need the IDs back, let's insert them one by one or fetch them after.
   // Actually, we can use a transaction.
   const createdFaqs = await prisma.$transaction(
-    dataToInsert.map(data => prisma.forumPost.create({
+    dataToInsert.map((data: any) => prisma.forumPost.create({
       data,
       select: { id: true, question: true, content: true, created_at: true, product_id: true }
     }))
@@ -484,7 +484,7 @@ export async function getReportsData(locale: string = "az") {
     }
   });
 
-  const productsWithStats = productsData.map(p => ({
+  const productsWithStats = productsData.map((p: any) => ({
     ...p,
     forum_posts: [{ count: p._count.forumPosts }]
   }));

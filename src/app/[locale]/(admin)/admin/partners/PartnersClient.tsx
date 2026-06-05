@@ -278,7 +278,7 @@ export default function PartnersClient({ initialSites, activeCompanies, categori
                                     onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
                                   >
                                     <option value="" disabled>Seçin...</option>
-                                    {activeCompanies.map(c => (
+                                    {activeCompanies.map((c: any) => (
                                       <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                   </select>
@@ -435,7 +435,7 @@ export default function PartnersClient({ initialSites, activeCompanies, categori
                   onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
                 >
                   <option value="">Seçin...</option>
-                  {categories.map(c => (
+                  {categories.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>

@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       orderBy: { priority: 'desc' }
     });
 
-    const eligibleCompanyIds = (partnerCompanies?.map(pc => pc.company_id).filter(Boolean) as string[]) || [];
+    const eligibleCompanyIds = (partnerCompanies?.map((pc: any) => pc.company_id).filter(Boolean) as string[]) || [];
 
     if (eligibleCompanyIds.length === 0) {
       return NextResponse.json({
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       if (url) {
         new URL(url).pathname
           .split(/[\/\-\_\.]/)
-          .map(s => s.toLowerCase().trim())
+          .map((s: any) => s.toLowerCase().trim())
           .filter(s => s.length >= 3)
           .forEach(s => signals.push(s));
       }
@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       decodeURIComponent(title)
         .toLowerCase()
         .split(/[\s\,\.\!\?\-\_]+/)
-        .map(s => s.trim())
+        .map((s: any) => s.trim())
         .filter(s => s.length >= 3)
         .forEach(s => signals.push(s));
     }
@@ -114,7 +114,7 @@ export async function GET(request: Request) {
           select: { id: true, name: true }
         });
 
-        const categoryNames = allCategories?.map(c => c.name).join(', ') || '';
+        const categoryNames = allCategories?.map((c: any) => c.name).join(', ') || '';
         const searchTitle = title ? decodeURIComponent(title) : '';
 
         const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {

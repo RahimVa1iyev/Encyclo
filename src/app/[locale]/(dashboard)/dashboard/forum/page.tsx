@@ -484,7 +484,7 @@ export default function ForumDashboardPage() {
   };
 
   const toggleAllFAQs = (select: boolean) => {
-    setAiFAQs(prev => prev.map(f => ({ ...f, selected: select })));
+    setAiFAQs(prev => prev.map((f: any) => ({ ...f, selected: select })));
   };
 
   if (isLoading) {

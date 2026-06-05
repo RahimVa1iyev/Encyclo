@@ -109,7 +109,7 @@ export default async function HomePage() {
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-2 text-sm" style={{ opacity: 0.85 }}>
               <span style={{ opacity: 0.7 }} className="mr-1">Dəstəklənir:</span>
-              {['ChatGPT', 'Perplexity', 'Google AI'].map(p => (
+              {['ChatGPT', 'Perplexity', 'Google AI'].map((p: any) => (
                 <span key={p} className="rounded-full px-3 py-1 text-xs font-medium" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                   {p}
                 </span>
@@ -167,7 +167,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
         <SectionHeading eyebrow="Niyə Encyclo?" title="GEO üçün hazır platform" subtitle="AI axtarış sistemlərində görünmək üçün ehtiyacınız olan hər şey bir yerdə." />
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map(f => {
+          {features.map((f: any) => {
             const Icon = f.icon
             return (
               <Card key={f.title}>
@@ -206,7 +206,7 @@ export default async function HomePage() {
               { n: `${companyCount ?? 0}+`, l: 'Aktiv şirkət' },
               { n: `${productCount ?? 0}+`, l: 'Yayımlanan məhsul' },
               { n: 'ChatGPT · Perplexity · Google AI', l: 'Dəstəklənən AI sistemlər', small: true },
-            ].map(s => (
+            ].map((s: any) => (
               <div key={s.l}>
                 <div
                   className={s.small ? 'text-lg font-black leading-tight' : 'text-5xl font-black'}
@@ -240,7 +240,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-5 text-sm" style={{ opacity: 0.9 }}>
-            {['2 dəqiqədə qurulum', 'Pulsuz beta', 'AZ/EN/RU dəstəyi'].map(x => (
+            {['2 dəqiqədə qurulum', 'Pulsuz beta', 'AZ/EN/RU dəstəyi'].map((x: any) => (
               <span key={x} className="inline-flex items-center gap-1.5">
                 <Check size={16} /> {x}
               </span>
