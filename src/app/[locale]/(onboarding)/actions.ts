@@ -93,7 +93,7 @@ export async function finishOnboardingAction(companyId: string) {
   });
 
   await unstable_update({
-    user: { onboarding_completed: true }
+    user: { onboarding_completed: true } as any
   });
 
   return { success: true };
