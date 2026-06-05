@@ -363,7 +363,7 @@ export async function getForumData(locale: string = "az") {
     include: { translations: withTranslation(locale) }
   });
 
-  const productIds = productsData.map(p => p.id);
+  const productIds = productsData.map((p: any) => p.id);
   const faqData = await prisma.forumPost.findMany({
     where: {
       product_id: { in: productIds },
