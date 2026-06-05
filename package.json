@@ -9,7 +9,8 @@
     "lint": "next lint",
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "seed:categories": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-categories.ts",
-    "typecheck": "tsc --noEmit --strict"
+    "typecheck": "tsc --noEmit --strict",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
