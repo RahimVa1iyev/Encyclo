@@ -304,7 +304,7 @@ export default function CompanyProfilePage() {
       { key: 'metaTitle', label: 'SEO başlıq var', passed: !!metaTitle },
       { key: 'metaDesc', label: 'SEO təsvir var', passed: !!metaDescription },
       { key: 'phone', label: 'Telefon var', passed: !!phone },
-      { key: 'social', label: 'Sosial media var', passed: Object.values(socialLinks).some(v => v.trim()) },
+      { key: 'social', label: 'Sosial media var', passed: Object.values(socialLinks).some((v: any) => v.trim()) },
       { key: 'founding', label: 'Quruluş ili var', passed: !!foundingYear },
     ];
     const passedCount = checks.filter((c: any) => c.passed).length;
@@ -401,7 +401,7 @@ export default function CompanyProfilePage() {
                   type="button"
                   onClick={() => {
                     if (showAIPanel) {
-                      const hasData = Object.values(aiAnswers).some(a => a.trim());
+                      const hasData = Object.values(aiAnswers).some((a: any) => a.trim());
                       if (hasData) {
                         const confirmed = window.confirm('Doldurulmuş cavablar silinəcək. Bağlamaq istəyirsiniz?');
                         if (!confirmed) return;

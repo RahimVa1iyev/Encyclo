@@ -321,7 +321,7 @@ export default function DashboardPage() {
 
             {/* Ən aşağı score-lu məhsulun breakdown-u */}
             {productScores.length > 0 && (() => {
-              const worst = [...productScores].sort((a, b) => a.score.percentage - b.score.percentage)[0];
+              const worst = [...productScores].sort((a: any, b: any) => a.score.percentage - b.score.percentage)[0];
               const worstName = worst.product.translations?.find((t: any) => t.locale === 'az')?.name || 'Məhsul';
               return (
                 <div className="space-y-3">

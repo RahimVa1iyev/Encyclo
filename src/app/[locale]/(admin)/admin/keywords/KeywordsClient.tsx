@@ -34,7 +34,7 @@ export default function KeywordsClient({ categories }: { categories: Category[] 
 
   const emptyCategories = categories.filter((c: any) => c.categoryKeywords.length === 0)
 
-  const sortedCategories = [...categories].sort((a, b) => {
+  const sortedCategories = [...categories].sort((a: any, b: any) => {
     return a.categoryKeywords.length - b.categoryKeywords.length
   })
 
@@ -278,7 +278,7 @@ function CategoryCard({ category }: { category: Category }) {
           <p style={{ fontSize: '13px', color: 'var(--muted-foreground)', textAlign: 'center', margin: 0, padding: '16px 0' }}>Keyword yoxdur — aşağıdan əlavə edin</p>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {category.categoryKeywords.sort((a, b) => b.weight - a.weight).map((k: any) => (
+            {category.categoryKeywords.sort((a: any, b: any) => b.weight - a.weight).map((k: any) => (
               <KeywordPill key={k.id} keyword={k} onRemove={() => handleRemove(k.id)} />
             ))}
           </div>

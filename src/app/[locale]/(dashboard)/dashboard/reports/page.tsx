@@ -39,10 +39,10 @@ export default function ReportsPage() {
       if (productsData) {
         setProducts(productsData as any[]);
         setStats({
-          totalViews: productsData.reduce((sum, p) => sum + (p.views || 0), 0),
+          totalViews: productsData.reduce((sum: any, p: any) => sum + (p.views || 0), 0),
           totalProducts: productsData.length,
           activeProducts: productsData.filter((p: any) => p.status === 'active').length,
-          totalForumPosts: productsData.reduce((sum, p) => sum + (p.forum_posts?.[0]?.count || 0), 0),
+          totalForumPosts: productsData.reduce((sum: any, p: any) => sum + (p.forum_posts?.[0]?.count || 0), 0),
         });
       }
 

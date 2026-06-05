@@ -93,7 +93,7 @@ export async function GET(request: Request) {
           }
         });
 
-        const topEntry = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+        const topEntry = Object.entries(scores).sort((a: any, b: any) => b[1] - a[1])[0];
 
         if (topEntry) {
           matchedCategoryId = topEntry[0];
