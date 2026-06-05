@@ -60,7 +60,7 @@ export async function getDashboardPageData(locale: string = "az") {
     }
   });
 
-  const productIds = allProducts.map(p => p.id);
+  const productIds = allProducts.map((p: any) => p.id);
   const faqs = await prisma.forumPost.findMany({
     where: {
       product_id: { in: productIds },
