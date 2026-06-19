@@ -9,7 +9,7 @@ export const metadata = {
   title: 'Bütün Şirkətlər — Encyclo',
   description: 'Azərbaycanın texnologiya şirkətləri',
   alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/companies`,
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/companies`,
   },
   openGraph: {
     title: 'Bütün Şirkətlər — Encyclo',
@@ -41,7 +41,7 @@ export default async function AllCompaniesPage({ params, searchParams }: { param
     "@type": "CollectionPage",
     "name": "Azərbaycan Texnologiya Şirkətləri",
     "description": "Azərbaycanın texnologiya şirkətlərinin tam siyahısı.",
-    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/companies`,
+    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/companies`,
     "numberOfItems": companies?.length || 0
   }
 

@@ -2,7 +2,7 @@ import { withTranslation } from "@/lib/prisma-locale";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

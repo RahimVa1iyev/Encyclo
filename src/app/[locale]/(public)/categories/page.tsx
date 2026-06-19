@@ -10,7 +10,7 @@ export async function generateMetadata() {
     title: 'Kateqoriyalar — Encyclo',
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/categories`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/categories`,
     },
     openGraph: {
       title: 'Kateqoriyalar — Encyclo',

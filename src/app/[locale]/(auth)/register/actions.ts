@@ -12,8 +12,9 @@ export async function checkCompanySlugExistsAction(slug: string) {
 
 export async function createCompanyAfterRegisterAction(slug: string, name: string) {
   const session = await auth();
+  console.log("createCompanyAfterRegisterAction session:", session);
   const user = session?.user;
-  if (!user) throw new Error("Unauthorized");
+  if (!user) throw new Error("Unauthorized in createCompanyAfterRegisterAction");
 
   const company = await prisma.company.create({
     data: {

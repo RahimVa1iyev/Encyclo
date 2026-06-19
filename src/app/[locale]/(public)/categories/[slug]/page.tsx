@@ -27,7 +27,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     title: `${name} — Encyclo`,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/categories/${params.slug}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/categories/${params.slug}`,
     },
     openGraph: {
       title: `${name} — Encyclo`,

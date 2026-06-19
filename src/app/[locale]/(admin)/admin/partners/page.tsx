@@ -1,3 +1,4 @@
+import { requireSuperadminPage } from "../../server-guard";
 import { withTranslation } from "@/lib/prisma-locale";
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
@@ -5,6 +6,8 @@ import PartnersClient from "./PartnersClient"
 import { redirect } from '@/lib/navigation';
 
 export default async function PartnersPage() {
+  await requireSuperadminPage();
+
   const session = await auth();
   const user = session?.user;
   if (!user) {

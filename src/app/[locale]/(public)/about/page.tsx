@@ -8,7 +8,7 @@ export const metadata = {
   title: "Haqqında — Encyclo",
   description: "Encyclo — Azərbaycan şirkətlərinin məhsul və xidmətlərini AI axtarış sistemlərində görünən hala gətirən platforma.",
   alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/about`,
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/about`,
   },
   openGraph: {
     title: "Haqqında — Encyclo",
@@ -22,11 +22,11 @@ export default function AboutPage() {
     "@type": "AboutPage",
     "name": "Haqqında — Encyclo",
     "description": "Encyclo — Azərbaycan şirkətlərinin məhsul və xidmətlərini AI axtarış sistemlərində görünən hala gətirən platforma.",
-    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/about`,
+    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/about`,
     "publisher": {
       "@type": "Organization",
       "name": "Encyclo",
-      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encyclo-phi.vercel.app",
+      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encycloai.com",
       "email": `hello@${siteConfig.url.replace(/^https?:\/\//, '').split(':')[0]}`,
       "foundingDate": "2024"
     }
@@ -36,7 +36,7 @@ export default function AboutPage() {
     "@type": "Organization",
     "name": "Encyclo",
     "description": "Azərbaycanın ilk Generative Engine Optimization (GEO) platforması",
-    "url": process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'
+    "url": process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'
   }
 
   return (

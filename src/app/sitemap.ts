@@ -21,7 +21,7 @@ export default async function sitemap() {
     }),
   ])
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'
 
   const companyUrls = companies.map((c: any) => ({
     url: `${baseUrl}/companies/${c.slug}`,

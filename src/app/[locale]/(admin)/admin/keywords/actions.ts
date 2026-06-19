@@ -1,25 +1,13 @@
 "use server"
 
+import { requireSuperadmin } from "@/lib/admin-auth";
+
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 
 export async function addKeyword(category_id: string, keyword: string, weight: number) {
-  const session = await auth();
-  const user = session?.user;
-
-  if (!user) {
-    throw new Error("Unauthorized")
-  }
-
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { role: true }
-  })
-
-  if (profile?.role !== "superadmin") {
-    throw new Error("Unauthorized")
-  }
+  const user = await requireSuperadmin();
 
   await prisma.categoryKeyword.create({
     data: {
@@ -33,21 +21,7 @@ export async function addKeyword(category_id: string, keyword: string, weight: n
 }
 
 export async function removeKeyword(id: string) {
-  const session = await auth();
-  const user = session?.user;
-
-  if (!user) {
-    throw new Error("Unauthorized")
-  }
-
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { role: true }
-  })
-
-  if (profile?.role !== "superadmin") {
-    throw new Error("Unauthorized")
-  }
+  const user = await requireSuperadmin();
 
   await prisma.categoryKeyword.delete({
     where: { id }
@@ -57,21 +31,7 @@ export async function removeKeyword(id: string) {
 }
 
 export async function addCategory(name: string, slug: string) {
-  const session = await auth();
-  const user = session?.user;
-
-  if (!user) {
-    throw new Error("Unauthorized")
-  }
-
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { role: true }
-  })
-
-  if (profile?.role !== "superadmin") {
-    throw new Error("Unauthorized")
-  }
+  const user = await requireSuperadmin();
 
   await prisma.category.create({
     data: {
@@ -84,21 +44,7 @@ export async function addCategory(name: string, slug: string) {
 }
 
 export async function generateKeywordsAI(categoryName: string, existingKeywords: string[]) {
-  const session = await auth();
-  const user = session?.user;
-
-  if (!user) {
-    throw new Error("Unauthorized")
-  }
-
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { role: true }
-  })
-
-  if (profile?.role !== "superadmin") {
-    throw new Error("Unauthorized")
-  }
+  const user = await requireSuperadmin();
 
   const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -136,18 +82,7 @@ export async function generateKeywordsAI(categoryName: string, existingKeywords:
 }
 
 export async function deleteCategory(id: string) {
-  const session = await auth();
-  const user = session?.user;
-
-  if (!user) throw new Error("Unauthorized")
-
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { role: true }
-  })
-
-  if (profile?.role !== "superadmin") throw new Error("Unauthorized")
-
+  const user = await requireSuperadmin();
   // Check if category has companies or products
   const inUse = await prisma.category.findUnique({
     where: { id },

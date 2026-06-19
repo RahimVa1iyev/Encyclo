@@ -131,9 +131,9 @@ export default async function DistributionPage() {
           <CardContent>
             <div className="relative">
               <pre className="bg-muted rounded-xl p-4 text-xs overflow-x-auto whitespace-pre-wrap">
-                {`<div id="encyclo-widget"></div>\n<script src="${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/widget.js" data-company-id="${company?.id}"></script>`}
+                {`<div id="encyclo-widget"></div>\n<script src="${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/widget.js" data-company-id="${company?.id}"></script>`}
               </pre>
-              <CopyWidgetCode code={`<div id="encyclo-widget"></div>\n<script src="${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/widget.js" data-company-id="${company?.id}"></script>`} />
+              <CopyWidgetCode code={`<div id="encyclo-widget"></div>\n<script src="${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/widget.js" data-company-id="${company?.id}"></script>`} />
             </div>
           </CardContent>
         </Card>

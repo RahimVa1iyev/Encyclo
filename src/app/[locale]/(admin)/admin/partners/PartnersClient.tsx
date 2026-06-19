@@ -76,7 +76,7 @@ export default function PartnersClient({ initialSites, activeCompanies, categori
   }
 
   const handleCopyScript = (apiKey: string) => {
-    const script = `<script src="https://encyclo-phi.vercel.app/widget.js" data-key="${apiKey}"></script>\n<div id="encyclo-widget"></div>`
+    const script = `<script src="https://encycloai.com/widget.js" data-key="${apiKey}"></script>\n<div id="encyclo-widget"></div>`
     navigator.clipboard.writeText(script)
     toast.success("Kod kopyalandı!")
   }
@@ -329,7 +329,7 @@ export default function PartnersClient({ initialSites, activeCompanies, categori
                                 overflowX: 'auto', whiteSpace: 'pre',
                                 margin: 0
                               }}>
-{`<script src="https://encyclo-phi.vercel.app/widget.js" data-key="${site.api_key}"></script>
+{`<script src="https://encycloai.com/widget.js" data-key="${site.api_key}"></script>
 <div id="encyclo-widget"></div>`}
                               </pre>
                             </div>

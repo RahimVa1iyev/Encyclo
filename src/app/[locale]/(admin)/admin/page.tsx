@@ -1,7 +1,10 @@
+import { requireSuperadminPage } from "../server-guard";
 import { prisma } from "@/lib/db";
 import { Building, Globe, Tag } from "lucide-react";
 
 export default async function AdminDashboardPage() {
+  await requireSuperadminPage();
+
   // Fetch counts
   const [totalCompanies, activeSites, totalKeywords] = await Promise.all([
     prisma.company.count(),

@@ -58,6 +58,11 @@ model Company {
   email                String?
   founding_year        Int?
   area_served          String?
+  review_notes         String?
+  reviewed_by          String?   @db.Uuid
+  reviewed_at          DateTime? @db.Timestamptz
+  submitted_at         DateTime? @db.Timestamptz
+  tax_id               String?
 
   category             Category?            @relation(fields: [category_id], references: [id])
   translations         CompanyTranslation[]
@@ -215,6 +220,7 @@ model Account {
   id_token          String?
   session_state     String?
   user              Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
   @@map("accounts")
 }
@@ -225,6 +231,7 @@ model Session {
   userId       String   @db.Uuid
   expires      DateTime
   user         Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("sessions")
 }
 
@@ -232,6 +239,7 @@ model VerificationToken {
   identifier String
   token      String
   expires    DateTime
+
   @@unique([identifier, token])
   @@map("verification_tokens")
 }

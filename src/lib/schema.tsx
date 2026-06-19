@@ -1,6 +1,6 @@
 import React from 'react'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'
 
 // HTML tag-larını silmək, yeni sətirləri və artıq boşluqları təmizləmək və 500 xarakterə kəsmək üçün
 function cleanDescription(text: string): string {

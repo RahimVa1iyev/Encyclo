@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Məhsullar — Encyclo',
   description: 'Azərbaycan şirkətlərinin məhsul və xidmətlərini kəşf edin.',
   alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/products`,
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/products`,
   },
 }
 

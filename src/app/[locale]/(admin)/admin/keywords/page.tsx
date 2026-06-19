@@ -1,7 +1,10 @@
+import { requireSuperadminPage } from "../../server-guard";
 import { prisma } from "@/lib/db"
 import KeywordsClient from "./KeywordsClient"
 
 export default async function KeywordsPage() {
+  await requireSuperadminPage();
+
   const categories = await prisma.category.findMany({
     select: {
       id: true,

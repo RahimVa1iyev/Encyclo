@@ -11,6 +11,15 @@ export async function getOnboardingDataAction(locale: string = "az") {
   const user = session?.user;
   if (!user) return null;
 
+  const profile = await prisma.profile.findUnique({
+    where: { id: user.id },
+    select: { emailVerified: true }
+  });
+
+  if (!profile?.emailVerified) {
+    return { redirectTo: "/verify-email" as const };
+  }
+
   const categories = await prisma.category.findMany({
     orderBy: { name: 'asc' }
   });
@@ -25,7 +34,24 @@ export async function getOnboardingDataAction(locale: string = "az") {
   return { categories, company };
 }
 
-export async function updateOnboardingStep1Action(companyId: string, categoryId: string, website: string, name: string, description: string) {
+export type OnboardingStep1Input = {
+  companyId: string;
+  categoryId: string;
+  website: string;
+  name: string;
+  description: string;
+  phone: string;
+  address: string;
+  taxId: string;
+  email: string;
+  foundingYear: string;
+};
+
+export async function updateOnboardingStep1Action(input: OnboardingStep1Input) {
+  const {
+    companyId, categoryId, website, name, description,
+    phone, address, taxId, email, foundingYear
+  } = input;
   const session = await auth();
   const user = session?.user;
   if (!user) throw new Error("Unauthorized");
@@ -34,31 +60,40 @@ export async function updateOnboardingStep1Action(companyId: string, categoryId:
   const company = await prisma.company.findFirst({ where: { id: companyId, owner_id: user.id } });
   if (!company) throw new Error("Company not found or unauthorized");
 
-  await prisma.company.update({
-    where: { id: companyId },
-    data: { category_id: categoryId, website }
-  });
-
-  // Update translation
-  const existingTranslation = await prisma.companyTranslation.findFirst({
-    where: { company_id: companyId, locale: "az" }
-  });
-
-  if (existingTranslation) {
-    await prisma.companyTranslation.update({
-      where: { id: existingTranslation.id },
-      data: { name, description }
-    });
-  } else {
-    await prisma.companyTranslation.create({
-      data: {
-        company_id: companyId,
-        locale: "az",
-        name,
-        description
+  await prisma.$transaction(async (tx) => {
+    await tx.company.update({
+      where: { id: companyId },
+      data: { 
+        category_id: categoryId, 
+        website, 
+        phone: phone || null, 
+        tax_id: taxId || null,
+        email: email || null,
+        founding_year: foundingYear ? parseInt(foundingYear, 10) : null
       }
     });
-  }
+
+    const existingTranslation = await tx.companyTranslation.findFirst({
+      where: { company_id: companyId, locale: "az" }
+    });
+
+    if (existingTranslation) {
+      await tx.companyTranslation.update({
+        where: { id: existingTranslation.id },
+        data: { name, description, address: address || null }
+      });
+    } else {
+      await tx.companyTranslation.create({
+        data: {
+          company_id: companyId,
+          locale: "az",
+          name,
+          description,
+          address: address || null
+        }
+      });
+    }
+  });
 
   return { success: true };
 }
@@ -89,7 +124,11 @@ export async function finishOnboardingAction(companyId: string) {
 
   await prisma.company.update({
     where: { id: companyId },
-    data: { onboarding_completed: true, status: "active" }
+    data: {
+      onboarding_completed: true,
+      status: "pending_review",
+      submitted_at: new Date()
+    }
   });
 
   await unstable_update({

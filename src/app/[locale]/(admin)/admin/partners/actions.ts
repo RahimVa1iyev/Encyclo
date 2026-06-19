@@ -5,19 +5,10 @@ import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "crypto"
 
-async function verifySuperadmin() {
-  const session = await auth()
-  const user = session?.user
-  if (!user) throw new Error("Unauthorized")
-
-  if ((user as any).role !== "superadmin") {
-    throw new Error("Unauthorized")
-  }
-  return user
-}
+import { requireSuperadmin } from "@/lib/admin-auth";
 
 export async function addPartnerSite(name: string, domain: string, category_id?: string) {
-  await verifySuperadmin()
+  await requireSuperadmin()
 
   const apiKey = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '').substring(0, 16);
 
@@ -35,7 +26,7 @@ export async function addPartnerSite(name: string, domain: string, category_id?:
 }
 
 export async function addCompanyToSite(partner_site_id: string, company_id: string, priority: number = 0) {
-  await verifySuperadmin()
+  await requireSuperadmin()
 
   await prisma.partnerSiteCompany.create({
     data: {
@@ -49,7 +40,7 @@ export async function addCompanyToSite(partner_site_id: string, company_id: stri
 }
 
 export async function removeCompanyFromSite(partner_site_id: string, company_id: string) {
-  await verifySuperadmin()
+  await requireSuperadmin()
 
   await prisma.partnerSiteCompany.deleteMany({
     where: {
@@ -62,7 +53,7 @@ export async function removeCompanyFromSite(partner_site_id: string, company_id:
 }
 
 export async function updatePartnerSiteStatus(id: string, status: 'active' | 'suspended') {
-  await verifySuperadmin()
+  await requireSuperadmin()
 
   await prisma.partnerSite.update({
     where: { id },

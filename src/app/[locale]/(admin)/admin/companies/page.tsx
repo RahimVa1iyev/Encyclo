@@ -1,8 +1,16 @@
+import { requireSuperadminPage } from "../../server-guard";
 import { withTranslation } from "@/lib/prisma-locale";
 import { prisma } from "@/lib/db"
 import { Building, Activity, FileEdit, Ban } from "lucide-react"
+import { getPendingCompaniesAction } from "./actions";
+import PendingReviewClient from "./PendingReviewClient";
+import { ClickableRow } from "./ClickableRow";
 
 export default async function AdminCompaniesPage() {
+  await requireSuperadminPage();
+
+  const pendingCompanies = await getPendingCompaniesAction();
+
   const safeCompanies = await prisma.company.findMany({
     select: {
       id: true,
@@ -69,6 +77,16 @@ export default async function AdminCompaniesPage() {
         <h1 style={{ fontSize: '24px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--foreground)' }}>Şirkətlər</h1>
         <p style={{ fontSize: '14px', margin: 0, color: 'var(--muted-foreground)' }}>Platformada qeydiyyatdan keçmiş bütün şirkətlərin siyahısı.</p>
       </div>
+
+      {pendingCompanies.length > 0 && (
+        <div style={{ backgroundColor: 'var(--surface)', padding: '20px', borderRadius: '16px', border: '0.5px solid var(--border)' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 16px 0', color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
+            Nəzərdən keçirilməyini gözləyən ({pendingCompanies.length})
+          </h2>
+          <PendingReviewClient companies={pendingCompanies} />
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
         {/* Total Card */}
@@ -138,7 +156,12 @@ export default async function AdminCompaniesPage() {
                 const plan = sub?.plan
 
                 return (
-                  <tr key={company.id} className="hover:bg-[var(--muted)] transition-colors" style={{ borderBottom: '0.5px solid var(--border)' }}>
+                  <ClickableRow 
+                    key={company.id} 
+                    href={`/admin/companies/${company.id}`}
+                    className="hover:bg-[var(--muted)] transition-colors" 
+                    style={{ borderBottom: '0.5px solid var(--border)' }}
+                  >
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--foreground)' }}>{name}</td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--muted-foreground)' }}>{company.slug}</td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--foreground)' }}>{getPlanBadge(plan)}</td>
@@ -146,7 +169,7 @@ export default async function AdminCompaniesPage() {
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--muted-foreground)' }}>
                       {new Date(company.created_at).toLocaleDateString()}
                     </td>
-                  </tr>
+                  </ClickableRow>
                 )
               })}
               {safeCompanies.length === 0 && (

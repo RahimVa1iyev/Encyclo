@@ -15,6 +15,8 @@ export async function getDashboardLayoutData(locale: string = "az") {
     where: { owner_id: user.id },
     select: {
       id: true,
+      status: true,
+      review_notes: true,
       translations: { ...withTranslation(locale), select: { name: true } }
     }
   });
@@ -30,7 +32,9 @@ export async function getDashboardLayoutData(locale: string = "az") {
 
   return {
     companyName: company.translations[0]?.name || null,
-    newLeadsCount: leadsCount
+    newLeadsCount: leadsCount,
+    companyStatus: company.status,
+    reviewNotes: company.review_notes
   };
 }
 
@@ -490,4 +494,31 @@ export async function getReportsData(locale: string = "az") {
   }));
 
   return productsWithStats;
+}
+
+
+export async function resubmitCompanyAction(companyId: string) {
+  const session = await auth();
+  const user = session?.user;
+  if (!user) throw new Error("Unauthorized");
+
+  const company = await prisma.company.findFirst({
+    where: { id: companyId, owner_id: user.id }
+  });
+  if (!company) throw new Error("Company not found or unauthorized");
+
+  if (company.status !== "needs_changes") {
+    throw new Error("Bu profil hazırda yenidən göndərilə bilməz");
+  }
+
+  await prisma.company.update({
+    where: { id: companyId },
+    data: {
+      status: "pending_review",
+      submitted_at: new Date(),
+      review_notes: null
+    }
+  });
+
+  return { success: true };
 }

@@ -2,6 +2,7 @@ import { siteConfig } from '@/lib/config';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { SessionProvider } from '@/components/providers/session-provider';
 import { locales } from '../../../next-intl.config';
 import { DM_Sans } from 'next/font/google';
 
@@ -44,9 +45,11 @@ export default async function LocaleLayout({
           __html: `(function(){try{var t=localStorage.getItem('encyclo-theme');if(!t||!['slate','indigo','ocean','forest'].includes(t))t='slate';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','slate');}})();`
         }}
       />
-      <NextIntlClientProvider messages={messages}>
-        {children}
-      </NextIntlClientProvider>
+      <SessionProvider>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </SessionProvider>
     </div>
   );
 }

@@ -90,11 +90,11 @@ export default function FeaturesPage() {
     "@type": "WebPage",
     "name": "Xüsusiyyətlər — Encyclo",
     "description": "Encyclo platformasının əsas xüsusiyyətləri — GEO optimizasiya, widget inteqrasiyası, çoxdilli yayım.",
-    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/features`,
+    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/features`,
     "publisher": {
       "@type": "Organization",
       "name": "Encyclo",
-      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encyclo-phi.vercel.app"
+      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encycloai.com"
     }
   }
 

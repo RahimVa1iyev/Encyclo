@@ -245,6 +245,7 @@ export default function DashboardLayout({
   const [open, setOpen] = useState(false);
   const [companyName, setCompanyName] = useState("...");
   const [newLeadsCount, setNewLeadsCount] = useState(0);
+  const [companyStatus, setCompanyStatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchCompany() {
@@ -253,6 +254,7 @@ export default function DashboardLayout({
       if (data) {
         if (data.companyName) setCompanyName(data.companyName);
         if (data.newLeadsCount !== undefined) setNewLeadsCount(data.newLeadsCount);
+        if (data.companyStatus) setCompanyStatus(data.companyStatus);
       }
     }
     fetchCompany();
@@ -302,6 +304,16 @@ export default function DashboardLayout({
           onOpenSidebar={() => setOpen(true)} 
           companyName={companyName} 
         />
+        {companyStatus === "pending_review" && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-sm text-amber-800 font-medium">
+            ⏳ Profiliniz admin tərəfindən nəzərdən keçirilir — ensiklopediyada hələ görünmür
+          </div>
+        )}
+        {companyStatus === "needs_changes" && (
+          <div className="bg-red-50 border-b border-red-200 px-4 py-2.5 text-center text-sm text-red-800 font-medium">
+            ❌ Profilinizdə dəyişiklik tələb olunur — <a href="/dashboard/company" className="underline font-bold">bura klikləyin</a>
+          </div>
+        )}
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>

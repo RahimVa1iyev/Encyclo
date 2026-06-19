@@ -1,0 +1,2592 @@
+==================================================
+FILE: src/app/[locale]/(auth)/forgot-password/page.tsx
+==================================================
+"use client";
+
+import { useState } from "react";
+import { Link, useRouter } from '@/lib/navigation';
+import { Loader2, Check, ArrowLeft, KeyRound, Eye, EyeOff } from "lucide-react";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { OtpInput } from "@/components/ui/otp-input";
+import { OtpFormStep } from "@/components/auth/OtpFormStep";
+
+type Step = "email" | "otp" | "newPassword" | "done";
+
+export default function ForgotPasswordPage() {
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleSendOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Xəta baş verdi");
+        return;
+      }
+      setStep("otp");
+    } catch {
+      setError("Xəta baş verdi. Yenidən cəhd edin.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e?: React.FormEvent, codeOverride?: string) => {
+    if (e) e.preventDefault();
+    const code = codeOverride || otp.join("");
+    if (code.length !== 6) {
+      setError("6 rəqəmli kodu tam daxil edin");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/verify-reset-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: code })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Kod yanlışdır");
+        return;
+      }
+      setResetToken(data.resetToken);
+      setStep("newPassword");
+    } catch {
+      setError("Xəta baş verdi. Yenidən cəhd edin.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      setError("Şifrə ən azı 8 simvol olmalıdır");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Şifrələr uyğun gəlmir");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, resetToken, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Xəta baş verdi");
+        return;
+      }
+      setStep("done");
+    } catch {
+      setError("Xəta baş verdi. Yenidən cəhd edin.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const features = [
+    {
+      title: "Təhlükəsizlik",
+      description: "Şifrənizi güclü və təhlükəsiz saxlayın."
+    },
+    {
+      title: "Sürətli bərpa",
+      description: "Saniyələr ərzində yeni şifrə təyin edin və idarə panelinə daxil olun."
+    }
+  ];
+
+  const getTitle = () => {
+    if (step === "email" || step === "otp") return <>Şifrəni <span style={{ color: 'var(--accent)' }}>bərpa et</span></>;
+    if (step === "newPassword") return <>Yeni şifrə <span style={{ color: 'var(--accent)' }}>təyin edin</span></>;
+    return <>Şifrəniz <span style={{ color: 'var(--accent)' }}>yeniləndi</span></>;
+  };
+
+  const getDescription = () => {
+    if (step === "email") return "Hesabınıza girişi bərpa etmək üçün qeydiyyatdan keçdiyiniz email ünvanını daxil edin.";
+    if (step === "otp") return "Email ünvanınıza göndərdiyimiz təhlükəsizlik kodunu daxil edin.";
+    if (step === "newPassword") return "Hesabınız üçün yeni və daha güclü bir şifrə təyin edin.";
+    return "Şifrəniz uğurla dəyişdirildi. İndi yeni şifrənizlə sistemə daxil ola bilərsiniz.";
+  };
+
+  return (
+    <AuthLayout
+      title={getTitle()}
+      description={getDescription()}
+      features={features}
+    >
+      <div className="w-full max-w-sm mx-auto">
+        {step === "email" && (
+          <div className="animate-in fade-in duration-300">
+            <div className="mb-10 text-center">
+              <h1 className="text-3xl font-black tracking-tight mb-2">Şifrəni bərpa et</h1>
+              <p className="text-sm text-muted-foreground">
+                Email ünvanınızı daxil edin və sizə doğrulama kodu göndərək
+              </p>
+            </div>
+            <form className="space-y-5" onSubmit={handleSendOTP}>
+              <div>
+                <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2">
+                  Email ünvanı
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                  placeholder="name@company.com"
+                />
+              </div>
+              {error && (
+                <div className="text-red-500 text-sm bg-red-50/50 p-4 rounded-xl border border-red-100 text-center">
+                  {error}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed text-white"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Kod göndər"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {step === "otp" && (
+          <div className="animate-in slide-in-from-right-4 duration-300">
+            <OtpFormStep
+              icon={<KeyRound className="h-8 w-8" />}
+              title="Kodu daxil edin"
+              description={
+                <>
+                  <strong>{email}</strong> ünvanına göndərilən 6 rəqəmli kodu yazın
+                </>
+              }
+              otp={otp}
+              setOtp={setOtp}
+              error={error}
+              disabled={isLoading}
+              onComplete={(code) => handleVerifyOTP(undefined, code)}
+              onSubmit={handleVerifyOTP}
+            >
+              <button
+                type="submit"
+                disabled={isLoading || otp.join("").length !== 6}
+                className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed text-white"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Doğrula"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStep("email"); setError(null); }}
+                className="w-full text-center text-sm font-semibold hover:underline"
+                style={{ color: 'var(--accent)' }}
+              >
+                Email-i dəyişmək istəyirsiniz?
+              </button>
+            </OtpFormStep>
+          </div>
+        )}
+
+        {step === "newPassword" && (
+          <div className="animate-in slide-in-from-right-4 duration-300">
+            <div className="mb-10 text-center">
+              <h1 className="text-3xl font-black tracking-tight mb-2">Yeni şifrə</h1>
+              <p className="text-sm text-muted-foreground">Yeni şifrənizi daxil edin</p>
+            </div>
+            <form className="space-y-5" onSubmit={handleResetPassword}>
+              <div>
+                <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2">
+                  Yeni şifrə
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 pr-11 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                    placeholder="Ən azı 8 simvol"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-xl text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2">
+                  Şifrəni təkrarla
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 pr-11 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                    placeholder="Şifrəni yenidən daxil edin"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-xl text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              {error && (
+                <div className="text-red-500 text-sm bg-red-50/50 p-4 rounded-xl border border-red-100 text-center">
+                  {error}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={isLoading || !newPassword || !confirmPassword}
+                className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed text-white"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Şifrəni yenilə"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {step === "done" && (
+          <div className="animate-in zoom-in duration-300 text-center py-6">
+            <div
+              className="mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-6 text-white shadow-md"
+              style={{ backgroundColor: 'var(--accent)' }}
+            >
+              <Check className="h-8 w-8" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight mb-3">Şifrəniz yeniləndi</h1>
+            <p className="text-sm text-muted-foreground mb-8">
+              Yeni şifrənizlə daxil ola bilərsiniz.
+            </p>
+            <Link
+              href="/login"
+              className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 text-white gap-2 items-center"
+              style={{ backgroundColor: 'var(--accent)' }}
+            >
+              Daxil ol
+            </Link>
+          </div>
+        )}
+
+        {step !== "done" && (
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            <Link
+              href="/login"
+              className="font-bold hover:underline transition-colors inline-flex items-center gap-2"
+              style={{ color: 'var(--accent)' }}
+            >
+              <ArrowLeft className="h-4 w-4" /> Girişə qayıt
+            </Link>
+          </p>
+        )}
+      </div>
+    </AuthLayout>
+  );
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(auth)/login/layout.tsx
+==================================================
+import { siteConfig } from '@/lib/config';
+import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+
+type Props = { params: Promise<{ locale: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'meta.auth.login' });
+  
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: {
+      canonical: `${siteConfig.url}/${locale}`,
+      languages: {
+        'az': `${siteConfig.url}/az`,
+        'en': `${siteConfig.url}/en`,
+      }
+    },
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+      url: `${siteConfig.url}/${locale}`,
+      siteName: 'Encyclo',
+      locale: locale === 'az' ? 'az_AZ' : 'en_US',
+      alternateLocale: locale === 'az' ? ['en_US'] : ['az_AZ'],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('title'),
+      description: t('description'),
+    },
+    robots: {
+      index: true,
+      follow: true,
+    }
+  };
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(auth)/login/page.tsx
+==================================================
+"use client";
+
+import { useState, useMemo } from "react";
+import { Link } from '@/lib/navigation';
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { signIn } from "next-auth/react";
+
+
+
+import { AuthLayout } from "@/components/auth/AuthLayout";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (result?.error) throw new Error("Giriş məlumatları yanlışdır");
+
+      window.location.href = "/dashboard";
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Giriş məlumatları yanlışdır";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginFeatures = [
+    {
+      title: "Sürətli idarəetmə",
+      description: "Şirkət məlumatlarınızı anında yeniləyin və axtarış sistemlərində daha cəlbedici görünün."
+    },
+    {
+      title: "Məzmun optimizasiyası",
+      description: "Məhsul və xidmətlərinizi əlavə edərək, AI vasitəsilə ən yaxşı nəticə üçün optimallaşdırın."
+    }
+  ];
+
+  return (
+    <AuthLayout
+      title={
+        <>
+          Yenidən{" "}
+          <span style={{ color: 'var(--accent)' }}>
+            xoş gəldiniz
+          </span>
+        </>
+      }
+      description="Şirkətinizin profilini idarə etmək, yeni məhsullar əlavə etmək və statistikaları izləmək üçün idarəetmə panelinə daxil olun."
+      features={loginFeatures}
+    >
+      <div className="w-full max-w-sm mx-auto">
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-black tracking-tight mb-2">
+            Xoş gəldiniz
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Hesabınıza daxil olun
+          </p>
+        </div>
+
+        <form className="space-y-5" onSubmit={handleLogin}>
+          {/* Email */}
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2"
+            >
+              Email ünvanı
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+              placeholder="name@company.com"
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2"
+            >
+              Şifrə
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 pr-11 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="••••••••"
+              />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-lg text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <div className="mt-2 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium hover:underline transition-all"
+                  style={{ color: 'var(--accent)' }}
+                >
+                  Şifrəni unutmusunuz?
+                </Link>
+              </div>
+            </div>
+
+            {error && (
+            <div className="text-red-500 text-sm bg-red-50/50 p-4 rounded-xl border border-red-100 flex items-center justify-center">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed"
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="animate-spin h-5 w-5" />
+                    Giriş edilir...
+                  </span>
+                ) : (
+                  "Daxil ol"
+                )}
+              </button>
+            </div>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            Hesabınız yoxdur?{" "}
+            <Link
+              href="/register"
+              className="font-bold hover:text-foreground transition-colors"
+              style={{ color: 'var(--accent)' }}
+            >
+              Qeydiyyat
+            </Link>
+          </p>
+      </div>
+    </AuthLayout>
+  );
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(auth)/register/layout.tsx
+==================================================
+import { siteConfig } from '@/lib/config';
+import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+
+type Props = { params: Promise<{ locale: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'meta.auth.register' });
+  
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: {
+      canonical: `${siteConfig.url}/${locale}`,
+      languages: {
+        'az': `${siteConfig.url}/az`,
+        'en': `${siteConfig.url}/en`,
+      }
+    },
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+      url: `${siteConfig.url}/${locale}`,
+      siteName: 'Encyclo',
+      locale: locale === 'az' ? 'az_AZ' : 'en_US',
+      alternateLocale: locale === 'az' ? ['en_US'] : ['az_AZ'],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('title'),
+      description: t('description'),
+    },
+    robots: {
+      index: true,
+      follow: true,
+    }
+  };
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(auth)/register/page.tsx
+==================================================
+"use client";
+
+import { useState, useMemo } from "react";
+import { Link } from '@/lib/navigation';
+import { Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { slugify } from "@/lib/utils";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+
+function getPasswordStrength(pwd: string): 0 | 1 | 2 | 3 | 4 {
+  if (!pwd) return 0;
+  if (pwd.length < 8) return 1;
+  let score = 1;
+  if (pwd.length >= 10) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  return Math.min(score, 4) as 0 | 1 | 2 | 3 | 4;
+}
+
+
+
+export default function RegisterPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  const passwordStrength = getPasswordStrength(password);
+
+  const strengthLabel =
+    passwordStrength === 1
+      ? "Zəif"
+      : passwordStrength === 2
+        ? "Orta"
+        : passwordStrength === 3
+          ? "Güclü"
+          : passwordStrength === 4
+            ? "Çox Güclü"
+            : "";
+
+  const strengthColors = [
+    passwordStrength >= 1 ? "var(--accent)" : "var(--border)",
+    passwordStrength >= 2 ? "var(--accent)" : "var(--border)",
+    passwordStrength >= 3 ? "var(--accent)" : "var(--border)",
+    passwordStrength >= 4 ? "var(--accent)" : "var(--border)",
+  ];
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    // Validations
+    if (password.length < 8) {
+      setError("Şifrə minimum 8 simvol olmalıdır");
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Şifrələr uyğun gəlmir");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // 1. Prepare Slug
+      let companySlug = slugify(companyName);
+      
+      const { checkCompanySlugExistsAction, createCompanyAfterRegisterAction } = await import('./actions');
+      const slugExists = await checkCompanySlugExistsAction(companySlug);
+
+      if (slugExists) {
+        companySlug = companySlug + "-" + Math.floor(1000 + Math.random() * 9000);
+      }
+
+      // 2. Sign Up via API
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, companyName, companySlug })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Qeydiyyat zamanı xəta baş verdi");
+
+      const signInResult = await signIn("credentials", {
+        redirect: true,
+        callbackUrl: "/verify-email",
+        email,
+        password
+      });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Qeydiyyat zamanı xəta baş verdi";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const registerFeatures = [
+    {
+      title: "ChatGPT, Perplexity və Google AI-da tapılın",
+      description: "Süni intellekt axtarışlarında şirkətinizin və məhsullarınızın təbii şəkildə tapılmasını optimallaşdırın."
+    },
+    {
+      title: "Müasir B2B SaaS profili",
+      description: "Bütün fəaliyyət məlumatlarınızı və təsvirlərinizi bir peşəkar B2B panelində cəmləşdirin."
+    },
+    {
+      title: "Süni İntellekt dəstəyi",
+      description: "AI köməkçisi vasitəsilə profil məlumatlarınızı bir kliklə mükəmməl Azərbaycan dilində generasiya edin."
+    }
+  ];
+
+  return (
+    <AuthLayout
+      title={
+        <>
+          Şirkətinizi gələcəyin axtarış sistemlərinə{" "}
+          <span style={{ color: 'var(--accent)' }}>
+            hazırlayın
+          </span>
+        </>
+      }
+      description="Encyclo ilə şirkət məlumatlarınızı GEO (Generative Engine Optimization) formatında qurun və süni intellekt axtarış motorlarında ön sırada yer alın."
+      features={registerFeatures}
+    >
+      <div className="w-full max-w-sm mx-auto">
+        <div className="mb-10 text-center">
+          <h2 className="text-3xl font-black tracking-tight mb-2">
+            Hesab yaradın
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Şirkətinizi Encyclo-da yerləşdirin
+          </p>
+        </div>
+
+        <form className="space-y-5" onSubmit={handleRegister}>
+          {/* Company Name */}
+          <div>
+            <label
+              htmlFor="companyName"
+              className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2"
+            >
+              Şirkət adı
+            </label>
+            <input
+              id="companyName"
+              name="companyName"
+              type="text"
+              required
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+              placeholder="Acme Inc."
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2"
+            >
+              Email ünvanı
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+              placeholder="name@company.com"
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2"
+            >
+              Şifrə
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 pr-11 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="••••••••"
+              />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-lg text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {/* Password Strength Indicator */}
+              {password.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex gap-1">
+                    {strengthColors.map((color: any, i: any) => (
+                      <div
+                        key={i}
+                        className="h-1.5 flex-1 rounded-full transition-all duration-300"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                  <p
+                    className="text-xs mt-1 font-semibold"
+                    style={{ color: passwordStrength >= 3 ? 'var(--accent)' : 'var(--muted-foreground)' }}
+                  >
+                    {strengthLabel}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2"
+            >
+              Şifrəni təsdiqlə
+            </label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 pr-11 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="••••••••"
+              />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 rounded-r-lg text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+            <div className="text-red-500 text-sm bg-red-50/50 p-4 rounded-xl border border-red-100 flex items-center justify-center">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed"
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="animate-spin h-5 w-5" />
+                    Hesab yaradılır...
+                  </span>
+                ) : (
+                  "Qeydiyyatdan keç"
+                )}
+              </button>
+            </div>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            Hesabınız var?{" "}
+            <Link
+              href="/login"
+              className="font-bold hover:text-foreground transition-colors"
+              style={{ color: 'var(--accent)' }}
+            >
+              Daxil olun
+            </Link>
+          </p>
+      </div>
+    </AuthLayout>
+  );
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(auth)/verify-email/page.tsx
+==================================================
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "@/lib/navigation";
+import { useSession } from "next-auth/react";
+import { Loader2, Mail, RefreshCw, CheckCircle } from "lucide-react";
+import { OtpInput } from "@/components/ui/otp-input";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { OtpFormStep } from "@/components/auth/OtpFormStep";
+
+export default function VerifyEmailPage() {
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const router = useRouter();
+  const { update } = useSession();
+
+  useEffect(() => {
+    // Səhifə açılında OTP göndər
+    sendOTP();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  const sendOTP = async () => {
+    setIsSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/send-otp", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error === "Email artıq doğrulanıb") {
+          await update({ user: { emailVerified: true } });
+          router.push("/onboarding");
+          return;
+        }
+        setError(data.error);
+        return;
+      }
+      setCountdown(60); // 60 saniyə gözlə
+    } catch {
+      setError("Kod göndərilmədi. Yenidən cəhd edin.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const verifyOTP = async (code: string) => {
+    setIsVerifying(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: code })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error);
+        setOtp(["", "", "", "", "", ""]);
+        return;
+      }
+      
+      await update({ user: { emailVerified: true } });
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/onboarding");
+      }, 1500);
+    } catch {
+      setError("Xəta baş verdi. Yenidən cəhd edin.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <AuthLayout
+        title={
+          <>
+            Email <span style={{ color: "var(--accent)" }}>doğrulandı</span>
+          </>
+        }
+        description="Təbriklər, email ünvanınız uğurla təsdiqləndi!"
+      >
+        <div className="w-full max-w-sm mx-auto text-center space-y-6">
+          <div className="flex justify-center">
+            <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="h-10 w-10 text-green-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Təbriklər!</h1>
+            <p className="text-muted-foreground">Sistemə yönləndirilirsiniz...</p>
+          </div>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout
+      title={
+        <>
+          Emailinizi <span style={{ color: "var(--accent)" }}>doğrulayın</span>
+        </>
+      }
+      description="Qeydiyyatı tamamlamaq üçün email ünvanınıza göndərilmiş 6 rəqəmli kodu daxil edin."
+    >
+      <div className="w-full max-w-sm mx-auto">
+        <OtpFormStep
+          icon={<Mail className="h-7 w-7" />}
+          title="Doğrulama Kodu"
+          description="Kodu aşağıya daxil edin"
+          otp={otp}
+          setOtp={setOtp}
+          error={error}
+          disabled={isVerifying}
+          onComplete={(code) => verifyOTP(code)}
+        >
+          {/* Yükləmə */}
+          {isVerifying && (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-4">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Yoxlanılır...
+            </div>
+          )}
+
+          {/* Yenidən göndər */}
+          <div className="text-center mt-6">
+            {countdown > 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Yeni kod {countdown} saniyə sonra tələb edilə bilər
+              </p>
+            ) : (
+              <button
+                onClick={sendOTP}
+                disabled={isSending}
+                className="inline-flex items-center gap-2 text-sm font-semibold hover:underline disabled:opacity-50"
+                style={{ color: "var(--accent)" }}
+              >
+                {isSending ? (
+                  <><Loader2 className="h-3 w-3 animate-spin" /> Göndərilir...</>
+                ) : (
+                  <><RefreshCw className="h-3 w-3" /> Yeni kod tələb et</>
+                )}
+              </button>
+            )}
+          </div>
+        </OtpFormStep>
+      </div>
+    </AuthLayout>
+  );
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(auth)/register/actions.ts
+==================================================
+"use server";
+
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
+
+export async function checkCompanySlugExistsAction(slug: string) {
+  const existing = await prisma.company.findUnique({
+    where: { slug }
+  });
+  return !!existing;
+}
+
+export async function createCompanyAfterRegisterAction(slug: string, name: string) {
+  const session = await auth();
+  console.log("createCompanyAfterRegisterAction session:", session);
+  const user = session?.user;
+  if (!user) throw new Error("Unauthorized in createCompanyAfterRegisterAction");
+
+  const company = await prisma.company.create({
+    data: {
+      slug,
+      owner_id: user.id,
+      status: "draft"
+    }
+  });
+
+  await prisma.companyTranslation.create({
+    data: {
+      company_id: company.id,
+      locale: "az",
+      name: name
+    }
+  });
+
+  return { success: true };
+}
+
+
+
+==================================================
+FILE: src/app/api/auth/[...nextauth]/route.ts
+==================================================
+import { handlers } from "@/lib/auth";
+export const { GET, POST } = handlers;
+
+
+
+==================================================
+FILE: src/app/api/auth/forgot-password/route.ts
+==================================================
+import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+import { prisma } from "@/lib/db";
+import { RateLimiter } from "@/lib/rate-limit";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const rateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 15 dəqiqədə 5 sorğu
+
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
+  if (!rateLimiter.check(ip)) {
+    return NextResponse.json(
+      { error: "Çox sayda sorğu göndərildi. Bir az sonra yenidən cəhd edin." },
+      { status: 429 }
+    );
+  }
+
+  try {
+    const { email } = await request.json();
+    if (!email || typeof email !== "string") {
+      return NextResponse.json({ error: "Email tələb olunur" }, { status: 400 });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Eyni IP-dən eyni email üçün də əlavə rate limit (dəqiq email-yönlü spam qarşısı)
+    const emailRateLimitKey = `forgot-pw:${normalizedEmail}`;
+    if (!rateLimiter.check(emailRateLimitKey)) {
+      return NextResponse.json(
+        { error: "Çox sayda sorğu göndərildi. Bir az sonra yenidən cəhd edin." },
+        { status: 429 }
+      );
+    }
+
+    const user = await prisma.profile.findFirst({
+      where: { 
+        email: {
+          equals: normalizedEmail,
+          mode: "insensitive"
+        }
+      },
+      select: { id: true, email: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Bu email ünvanı ilə qeydiyyatdan keçilmiş hesab tapılmadı" }, { status: 404 });
+    }
+
+    // Köhnə reset OTP-ləri təmizlə
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: `RESET:${normalizedEmail}` }
+    });
+
+    const otp = generateOTP();
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 dəqiqə
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: `RESET:${normalizedEmail}`,
+        token: otp,
+        expires
+      }
+    });
+
+    console.log(`\n🔑 [ŞİFRƏ BƏRPA] ${normalizedEmail} üçün OTP Kodu: ${otp}\n`);
+
+    await resend.emails.send({
+      from: "Encyclo <onboarding@resend.dev>",
+      to: normalizedEmail,
+      subject: "Encyclo — Şifrə bərpa kodu",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+          <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Şifrə bərpa kodu</h2>
+          <p style="color: #6b7280; margin-bottom: 24px;">Şifrənizi bərpa etmək üçün bu kodu daxil edin:</p>
+          <div style="background: #f3f4f6; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+            <span style="font-size: 40px; font-weight: 900; letter-spacing: 8px; color: #111827;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">Bu kod 10 dəqiqə ərzində etibarlıdır.</p>
+          <p style="color: #9ca3af; font-size: 12px; margin-top: 16px;">Əgər siz bu sorğunu göndərməmisinizsə, bu emaili nəzərə almayın — hesabınız təhlükəsizdir.</p>
+        </div>
+      `
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Doğrulama kodu göndərildi."
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    // Xəta halında da generic mesaj — daxili detalları açma
+    return NextResponse.json(
+      { error: "Xəta baş verdi. Yenidən cəhd edin." },
+      { status: 500 }
+    );
+  }
+}
+
+
+
+==================================================
+FILE: src/app/api/auth/register/route.ts
+==================================================
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import bcryptjs from "bcryptjs";
+
+export async function POST(req: Request) {
+  try {
+    const { email, password, companyName, companySlug } = await req.json();
+
+    if (!email || !password || !companyName) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.profile.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "User already exists with this email" },
+        { status: 400 }
+      );
+    }
+
+    // Hash password
+    const hashedPassword = await bcryptjs.hash(password, 12);
+
+    // Create user in profiles table
+    // NextAuth standard uses uuid, let's generate one or let prisma do it if it's default
+    // We will generate a UUID manually since it's required by our schema
+    const crypto = require("crypto");
+    const userId = crypto.randomUUID();
+
+    const user = await prisma.profile.create({
+      data: {
+        id: userId,
+        email,
+        password: hashedPassword,
+        name: companyName, // store company name as user name for simplicity
+        role: "company",
+      },
+    });
+
+    const company = await prisma.company.create({
+      data: {
+        slug: companySlug,
+        owner_id: user.id,
+        status: "draft",
+      },
+    });
+
+    await prisma.companyTranslation.create({
+      data: {
+        company_id: company.id,
+        locale: "az",
+        name: companyName,
+      },
+    });
+
+    return NextResponse.json({ success: true, user: { id: user.id, email: user.email } }, { status: 201 });
+  } catch (error: any) {
+    console.error("Registration error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+
+
+==================================================
+FILE: src/app/api/auth/reset-password/route.ts
+==================================================
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import bcryptjs from "bcryptjs";
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, resetToken, newPassword } = await request.json();
+
+    if (!email || !resetToken || !newPassword) {
+      return NextResponse.json({ error: "Bütün sahələr tələb olunur" }, { status: 400 });
+    }
+
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      return NextResponse.json(
+        { error: "Şifrə ən azı 8 simvol olmalıdır" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const identifier = `RESET_TOKEN:${normalizedEmail}`;
+
+    const tokenRecord = await prisma.verificationToken.findFirst({
+      where: { identifier, token: resetToken }
+    });
+
+    if (!tokenRecord) {
+      return NextResponse.json(
+        { error: "Token yanlışdır və ya prosesi yenidən başlamalısınız" },
+        { status: 400 }
+      );
+    }
+
+    if (tokenRecord.expires < new Date()) {
+      await prisma.verificationToken.delete({
+        where: { identifier_token: { identifier, token: resetToken } }
+      });
+      return NextResponse.json(
+        { error: "Sessiyanın vaxtı keçib. Prosesi yenidən başlayın." },
+        { status: 400 }
+      );
+    }
+
+    const user = await prisma.profile.findFirst({
+      where: { 
+        email: {
+          equals: normalizedEmail,
+          mode: "insensitive"
+        }
+      },
+      select: { id: true }
+    });
+
+    if (!user) {
+      // Bura nəzəri olaraq çatılmamalıdır (əvvəlki addımlarda email yoxlanılıb)
+      return NextResponse.json({ error: "Xəta baş verdi" }, { status: 400 });
+    }
+
+    const hashedPassword = await bcryptjs.hash(newPassword, 10);
+
+    await prisma.profile.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    // Token-i sil (bir dəfəlik istifadə)
+    await prisma.verificationToken.delete({
+      where: { identifier_token: { identifier, token: resetToken } }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return NextResponse.json({ error: "Xəta baş verdi" }, { status: 500 });
+  }
+}
+
+
+
+==================================================
+FILE: src/app/api/auth/send-otp/route.ts
+==================================================
+import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    const user = session?.user;
+    if (!user) {
+      return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
+    }
+
+    const profile = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: { email: true, emailVerified: true }
+    });
+
+    if (!profile) {
+      return NextResponse.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
+    }
+
+    if (profile.emailVerified) {
+      return NextResponse.json({ error: "Email artıq doğrulanıb" }, { status: 400 });
+    }
+
+    // Köhnə token-ləri sil
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: profile.email }
+    });
+
+    const otp = generateOTP();
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 dəqiqə
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: profile.email,
+        token: otp,
+        expires
+      }
+    });
+
+    // Konsolda göstəririk ki, email getməsə belə lokalda yoxlamaq mümkün olsun
+    console.log(`\n🔑 [MÜHÜM] ${profile.email} üçün OTP Kodu: ${otp}\n`);
+
+    try {
+      const { data, error } = await resend.emails.send({
+        from: "Encyclo <onboarding@resend.dev>",
+        to: profile.email,
+        subject: "Encyclo — Email doğrulama kodu",
+        html: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Email doğrulama</h2>
+            <p style="color: #6b7280; margin-bottom: 24px;">Aşağıdakı kodu Encyclo-da daxil edin:</p>
+            <div style="background: #f3f4f6; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+              <span style="font-size: 40px; font-weight: 900; letter-spacing: 8px; color: #111827;">${otp}</span>
+            </div>
+            <p style="color: #6b7280; font-size: 14px;">Bu kod 10 dəqiqə ərzində etibarlıdır.</p>
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 16px;">Əgər siz bu sorğunu göndərməmisinizsə, bu emaili nəzərə almayın.</p>
+          </div>
+        `
+      });
+
+      if (error) {
+        console.error("Resend API Error:", error);
+      }
+    } catch (sendError) {
+      console.error("Resend throws error:", sendError);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("OTP send error:", error);
+    return NextResponse.json({ error: "Kod göndərilmədi" }, { status: 500 });
+  }
+}
+
+
+
+==================================================
+FILE: src/app/api/auth/verify-otp/route.ts
+==================================================
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { auth, unstable_update } from "@/lib/auth";
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    const user = session?.user;
+    if (!user) {
+      return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
+    }
+
+    const { otp } = await request.json();
+    if (!otp || otp.length !== 6) {
+      return NextResponse.json({ error: "Düzgün kod daxil edin" }, { status: 400 });
+    }
+
+    const profile = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: { email: true, emailVerified: true }
+    });
+
+    if (!profile) {
+      return NextResponse.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
+    }
+
+    if (profile.emailVerified) {
+      return NextResponse.json({ success: true, alreadyVerified: true });
+    }
+
+    const token = await prisma.verificationToken.findFirst({
+      where: {
+        identifier: profile.email,
+        token: otp
+      }
+    });
+
+    if (!token) {
+      return NextResponse.json({ error: "Kod yanlışdır" }, { status: 400 });
+    }
+
+    if (token.expires < new Date()) {
+      await prisma.verificationToken.delete({
+        where: { identifier_token: { identifier: profile.email, token: otp } }
+      });
+      return NextResponse.json({ error: "Kodun vaxtı keçib. Yeni kod tələb edin." }, { status: 400 });
+    }
+
+    // Email-i doğrulanmış işarələ
+    await prisma.profile.update({
+      where: { id: user.id },
+      data: { emailVerified: new Date() }
+    });
+
+    // Token-i sil
+    await prisma.verificationToken.delete({
+      where: { identifier_token: { identifier: profile.email, token: otp } }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("OTP verify error:", error);
+    return NextResponse.json({ error: "Doğrulama zamanı xəta baş verdi" }, { status: 500 });
+  }
+}
+
+
+
+==================================================
+FILE: src/app/api/auth/verify-reset-otp/route.ts
+==================================================
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { randomBytes } from "crypto";
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, otp } = await request.json();
+
+    if (!email || !otp || typeof otp !== "string" || otp.length !== 6) {
+      return NextResponse.json({ error: "Düzgün məlumat daxil edin" }, { status: 400 });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const identifier = `RESET:${normalizedEmail}`;
+
+    const tokenRecord = await prisma.verificationToken.findFirst({
+      where: { identifier, token: otp }
+    });
+
+    if (!tokenRecord) {
+      return NextResponse.json({ error: "Kod yanlışdır" }, { status: 400 });
+    }
+
+    if (tokenRecord.expires < new Date()) {
+      await prisma.verificationToken.delete({
+        where: { identifier_token: { identifier, token: otp } }
+      });
+      return NextResponse.json(
+        { error: "Kodun vaxtı keçib. Yeni kod tələb edin." },
+        { status: 400 }
+      );
+    }
+
+    // OTP-ni sil (bir dəfəlik istifadə)
+    await prisma.verificationToken.delete({
+      where: { identifier_token: { identifier, token: otp } }
+    });
+
+    // Köhnə reset token-ləri təmizlə (əgər varsa)
+    const resetTokenIdentifier = `RESET_TOKEN:${normalizedEmail}`;
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: resetTokenIdentifier }
+    });
+
+    // Yeni, kriptoqrafik təsadüfi resetToken yarat
+    const resetToken = randomBytes(32).toString("hex");
+    const resetExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 dəqiqə
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: resetTokenIdentifier,
+        token: resetToken,
+        expires: resetExpires
+      }
+    });
+
+    return NextResponse.json({ success: true, resetToken });
+  } catch (error) {
+    console.error("Verify reset OTP error:", error);
+    return NextResponse.json({ error: "Xəta baş verdi" }, { status: 500 });
+  }
+}
+
+
+
+==================================================
+FILE: src/components/auth/AuthLayout.tsx
+==================================================
+import { Check, ArrowLeft } from "lucide-react";
+import React from "react";
+import { Link } from '@/lib/navigation';
+
+interface AuthLayoutProps {
+  title: React.ReactNode;
+  description: React.ReactNode;
+  features?: { title: string; description: string }[];
+  children: React.ReactNode;
+}
+
+export function AuthLayout({ title, description, features = [], children }: AuthLayoutProps) {
+  return (
+    <div className="flex min-h-screen w-full flex-1">
+      
+      {/* Left Column: Value Props - Dark/Brand colored panel */}
+      <div className="hidden lg:flex flex-col justify-center flex-1 bg-zinc-950 dark:bg-zinc-950 text-white relative overflow-hidden px-12 xl:px-24 border-r border-border/10">
+        
+        {/* Back to Home Link (Desktop) */}
+        <div className="absolute top-8 left-12 xl:left-24 z-20">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors group">
+            <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            Ana səhifəyə qayıt
+          </Link>
+        </div>
+        {/* Abstract Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+           <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-20" style={{ backgroundColor: 'var(--accent)' }} />
+           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/20 rounded-full blur-[120px]" />
+           {/* Grid pattern mask */}
+           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_20%,transparent_100%)]" />
+        </div>
+
+        <div className="relative z-10 max-w-xl mx-auto w-full">
+          <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-6 leading-[1.15] text-white">
+            {title}
+          </h1>
+          <p className="text-base md:text-lg text-zinc-400 mb-12 leading-relaxed">
+            {description}
+          </p>
+          {features && features.length > 0 && (
+            <ul className="space-y-8">
+              {features.map((feat, i) => (
+                <li key={i} className="flex items-start gap-5 group">
+                  <div
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-white transition-all duration-300 group-hover:scale-110 group-hover:bg-white/10 group-hover:border-white/20"
+                  >
+                    <Check className="h-6 w-6" style={{ color: 'var(--accent)' }} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg text-zinc-100 group-hover:text-white transition-colors">
+                      {feat.title}
+                    </h4>
+                    <p className="text-sm text-zinc-400 mt-2 leading-relaxed">
+                      {feat.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* Right Column: Auth Card */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-12 bg-background relative">
+        {/* Back to Home Link (Mobile) */}
+        <div className="absolute top-6 left-6 lg:hidden z-20">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group">
+            <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center group-hover:bg-secondary/80 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+          </Link>
+        </div>
+
+        {/* Subtle background glow for the right side */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="w-full sm:max-w-md shrink-0 relative z-10">
+          <div className="flex justify-center mb-8 lg:hidden">
+            <span className="text-3xl font-black tracking-tight mb-2">
+              Encyclo
+            </span>
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+==================================================
+FILE: src/components/auth/OtpFormStep.tsx
+==================================================
+import React from "react";
+import { OtpInput } from "@/components/ui/otp-input";
+
+interface OtpFormStepProps {
+  icon: React.ReactNode;
+  title: string;
+  description: React.ReactNode;
+  otp: string[];
+  setOtp: (otp: string[]) => void;
+  error: string | null;
+  disabled: boolean;
+  onComplete: (code: string) => void;
+  children?: React.ReactNode;
+  onSubmit?: (e: React.FormEvent) => void;
+}
+
+export function OtpFormStep({
+  icon,
+  title,
+  description,
+  otp,
+  setOtp,
+  error,
+  disabled,
+  onComplete,
+  children,
+  onSubmit,
+}: OtpFormStepProps) {
+  const content = (
+    <>
+      <div className="mb-10 text-center">
+        <div
+          className="mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-6 text-white shadow-md"
+          style={{ backgroundColor: "var(--accent)" }}
+        >
+          {icon}
+        </div>
+        <h1 className="text-3xl font-black tracking-tight mb-2">{title}</h1>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+
+      <div className="space-y-5">
+        <OtpInput
+          otp={otp}
+          setOtp={setOtp}
+          error={error}
+          disabled={disabled}
+          onComplete={onComplete}
+        />
+
+        {error && (
+          <div className="text-red-500 text-sm bg-red-50/50 p-4 rounded-xl border border-red-100 text-center">
+            {error}
+          </div>
+        )}
+
+        {children}
+      </div>
+    </>
+  );
+
+  if (onSubmit) {
+    return <form onSubmit={onSubmit}>{content}</form>;
+  }
+
+  return <div>{content}</div>;
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(onboarding)/layout.tsx
+==================================================
+import { AuthLayout } from "@/components/auth/AuthLayout";
+
+export default function OnboardingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const onboardingFeatures = [
+    {
+      title: "Dəqiq kateqorizasiya",
+      description: "Fəaliyyət sahənizi dəqiq qeyd etməyiniz, sizin hədəf kütlənizə daha rahat çatmanızı təmin edəcək."
+    },
+    {
+      title: "AI üçün vizit kartınız",
+      description: "Təsvir hissəsində qeyd etdiyiniz bütün sözlər AI axtarış motorlarında baza olaraq istifadə ediləcək."
+    }
+  ];
+
+  return (
+    <AuthLayout
+      title={
+        <>
+          Profilinizi{" "}
+          <span style={{ color: 'var(--accent)' }}>
+            tamamlayın
+          </span>
+        </>
+      }
+      description="Şirkətinizin fəaliyyəti, məzmunu və loqosu barədə qısa məlumat verin ki, biz sizin üçün mükəmməl profil yarada bilək."
+      features={onboardingFeatures}
+    >
+      {children}
+    </AuthLayout>
+  );
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(onboarding)/onboarding/page.tsx
+==================================================
+"use client";
+
+import { useEffect, useState, useRef, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from '@/lib/navigation';
+import { getOnboardingDataAction, updateOnboardingStep1Action, updateCompanyLogoAction, finishOnboardingAction } from "../actions";
+import { cn, inputClass, selectClass } from "@/lib/utils";
+import {
+  Check,
+  Upload,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Globe,
+  Building2,
+  FileText,
+  Phone,
+  MapPin,
+  Sparkles,
+  Mail,
+  Calendar,
+} from "lucide-react";
+import type { Category, Company, CompanyTranslation } from "@/types";
+
+type Step = 1 | 2 | 3 | 4;
+
+export default function OnboardingPage() {
+  const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [company, setCompany] = useState<
+    (Company & { translations: CompanyTranslation[] }) | null
+  >(null);
+
+  // Step 1 & 2 State
+  const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [website, setWebsite] = useState("");
+  const [description, setDescription] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [email, setEmail] = useState("");
+  const [foundingYear, setFoundingYear] = useState("");
+  const [stepError, setStepError] = useState<string | null>(null);
+
+  // Step 3 State
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Step 4 State
+  const [finishError, setFinishError] = useState<string | null>(null);
+
+  const { data: session, status, update } = useSession();
+  const router = useRouter();
+  
+  useEffect(() => {
+    if (status === "loading") return;
+
+    async function init() {
+      // Email doğrulanmayıbsa yönləndir
+      if (session && !(session.user as any)?.emailVerified) {
+        router.push("/verify-email");
+        return;
+      }
+
+      const data = await getOnboardingDataAction();
+      if (!data) {
+        router.push("/login");
+        return;
+      }
+
+      if (data.categories) setCategories(data.categories as any);
+      
+      const compData = data.company;
+      if (compData) {
+        setCompany(compData as any);
+        setName(compData.translations?.[0]?.name || "");
+        setCategoryId(compData.category_id || "");
+        setWebsite(compData.website || "");
+        setDescription(compData.translations?.[0]?.description || "");
+        setPhone(compData.phone || "");
+        setAddress(compData.translations?.[0]?.address || "");
+        setTaxId(compData.tax_id || "");
+        setEmail(compData.email || "");
+        setFoundingYear(compData.founding_year ? compData.founding_year.toString() : "");
+        setLogoPreview(compData.logo_url || null);
+      }
+
+      setIsLoading(false);
+    }
+    init();
+  }, [router, session, status]);
+
+  const handleStep1 = () => {
+    if (!name || !categoryId) return;
+    setStepError(null);
+    setCurrentStep(2);
+  };
+
+  const handleStep2 = async () => {
+    if (!company?.id) {
+      setStepError("Şirkət məlumatı tapılmadı");
+      return;
+    }
+
+    setIsSaving(true);
+    setStepError(null);
+
+    try {
+      await updateOnboardingStep1Action(company.id, categoryId, website, name, description, phone, address, taxId, email, foundingYear);
+      setCurrentStep(3);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Xəta baş verdi";
+      setStepError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      setLogoUploadError("Şəkil 5MB-dan kiçik olmalıdır");
+      return;
+    }
+
+    setLogoUploadError(null);
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const saveLogo = async () => {
+    if (!company?.id) {
+      setLogoUploadError("Şirkət məlumatı tapılmadı");
+      return;
+    }
+
+    if (!logoFile) {
+      setCurrentStep(4);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', logoFile);
+      formData.append('folder', 'logos');
+
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json();
+        throw new Error(errorData.error || 'Logo yüklənərkən xəta baş verdi');
+      }
+
+      const data = await uploadRes.json();
+      const publicUrl = data.url;
+
+      await updateCompanyLogoAction(company.id, publicUrl);
+
+      setLogoPreview(publicUrl);
+      setCurrentStep(4);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Xəta baş verdi";
+      setLogoUploadError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const finishOnboarding = async () => {
+    if (!company?.id) {
+      setFinishError("Şirkət məlumatı tapılmadı");
+      return;
+    }
+
+    setIsSaving(true);
+    setFinishError(null);
+    try {
+      await finishOnboardingAction(company.id);
+      window.location.href = "/dashboard";
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Xəta baş verdi";
+      setFinishError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-sm mx-auto">
+      
+      {/* Premium Line + Glowing Orbs Step Indicator */}
+      <div className="relative mb-12 w-full mx-auto mt-4">
+        {/* Progress Line Background */}
+        <div className="absolute top-5 left-4 right-4 h-1.5 bg-secondary rounded-full overflow-hidden">
+          {/* Progress Fill */}
+          <div 
+            className="h-full transition-all duration-700 ease-in-out" 
+            style={{ 
+              width: `${((currentStep - 1) / 3) * 100}%`,
+              backgroundColor: 'var(--accent)',
+            }} 
+          />
+        </div>
+
+        <div className="relative flex justify-between">
+          {[
+            { id: 1, name: "Şirkət", icon: Building2 },
+            { id: 2, name: "Əlaqə", icon: Phone },
+            { id: 3, name: "Logo", icon: Upload },
+            { id: 4, name: "Hazır", icon: Check },
+          ].map((step) => {
+            const Icon = step.icon;
+            const isActive = currentStep === step.id;
+            const isCompleted = currentStep > step.id;
+
+            return (
+              <div key={step.id} className="flex flex-col items-center gap-3 relative z-10 w-16">
+                <div 
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-background relative",
+                    isActive ? "text-white shadow-lg ring-4 ring-accent/20 scale-110" : 
+                    isCompleted ? "text-white" : "bg-secondary text-muted-foreground"
+                  )}
+                  style={isActive || isCompleted ? { backgroundColor: 'var(--accent)' } : undefined}
+                >
+                  <Icon className="w-4 h-4" />
+                </div>
+                <span className={cn(
+                  "text-[10px] sm:text-[11px] uppercase tracking-widest font-bold text-center transition-colors duration-500 whitespace-nowrap absolute -bottom-6",
+                  isActive ? "text-foreground" : "text-muted-foreground"
+                )}>
+                  {step.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+            {currentStep === 1 && "Şirkət profilini tamamlayın"}
+            {currentStep === 2 && "Əlaqə məlumatlarını daxil edin"}
+            {currentStep === 3 && "Logonuzu əlavə edin"}
+            {currentStep === 4 && "Hər şey hazırdır!"}
+          </h1>
+        </div>
+
+        {/* Step 1: Profile */}
+        {currentStep === 1 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex items-center gap-2">
+                <Building2 className="h-4 w-4" /> Şirkət adı
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="Şirkət adını daxil edin"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5">
+                Kateqoriya
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm cursor-pointer"
+              >
+                <option value="">Kateqoriya seçin</option>
+                {categories.map((c: any) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex items-center gap-2">
+                <Globe className="h-4 w-4" /> Vebsayt (İstəyə bağlı)
+              </label>
+              <input
+                type="url"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="https://example.com"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> Təsvir
+                </label>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider"
+                  style={{ backgroundColor: 'var(--badge-bg)', color: 'var(--badge-fg)', borderColor: 'var(--border)' }}>
+                  AI oxuyur 🤖
+                </span>
+              </div>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+                rows={4}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm resize-none"
+                placeholder="ChatGPT bu məlumatı oxuyur — şirkətinizin nə etdiyini, kimə xidmət etdiyini və niyə seçilməli olduğunu yazın."
+              />
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Bu mətni Dashboard-da &quot;AI Məzmun&quot; bölməsindən struktur suallar əsasında da yaradabilərsiniz.
+                </p>
+                <div className="text-right text-[10px] text-muted-foreground">
+                  {description.length} / 500
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleStep1}
+              disabled={!name || !categoryId}
+              className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed items-center gap-2 mt-4"
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            >
+              Növbəti addım <ArrowRight className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: Contact */}
+        {currentStep === 2 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex items-center gap-2">
+                <Phone className="h-4 w-4" /> Telefon nömrəsi
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="+994"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex items-center gap-2">
+                <MapPin className="h-4 w-4" /> Ünvan
+              </label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="Ünvanı daxil edin"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex items-center gap-2">
+                <Mail className="h-4 w-4" /> Ümumi Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="Şirkətə aid email adresi"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex items-center gap-2">
+                <Calendar className="h-4 w-4" /> Qurulma ili
+              </label>
+              <input
+                type="number"
+                min="1800"
+                max={new Date().getFullYear()}
+                value={foundingYear}
+                onChange={(e) => setFoundingYear(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="Məsələn: 2024"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex items-center gap-2">
+                <FileText className="h-4 w-4" /> VÖEN (istəyə bağlı)
+              </label>
+              <input
+                type="text"
+                value={taxId}
+                onChange={(e) => setTaxId(e.target.value)}
+                className="block w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
+                placeholder="VÖEN"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                VÖEN əlavə etsəniz profiliniz Doğrulanmış statusunda daha sürətli baxılır
+              </p>
+            </div>
+
+            {stepError && (
+              <div className="text-red-500 text-sm bg-red-50/50 p-4 rounded-xl border border-red-100 flex items-center justify-center">
+                {stepError}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setCurrentStep(1)}
+                className="flex-1 bg-secondary text-foreground py-3.5 rounded-xl font-bold hover:bg-secondary/80 transition-all text-sm flex justify-center items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" /> Geri
+              </button>
+              <button
+                onClick={handleStep2}
+                disabled={isSaving}
+                className="flex-[2] flex justify-center rounded-xl px-4 py-3.5 text-sm font-bold transition-all shadow-sm active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed items-center gap-2"
+                style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>Növbəti addım <ArrowRight className="h-5 w-5" /></>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Logo */}
+        {currentStep === 3 && (
+          <div className="space-y-6 text-center animate-in fade-in slide-in-from-right-8 duration-500">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const file = e.dataTransfer.files[0];
+                if (file) handleLogoUpload(file);
+              }}
+              className={cn(
+                "relative border border-dashed rounded-3xl p-8 transition-all duration-200 cursor-pointer group flex flex-col items-center justify-center min-h-[240px] bg-background/50",
+                isDragOver
+                  ? "border-accent bg-accent/5 scale-[1.01]"
+                  : "border-border/60 hover:border-border hover:bg-secondary/30"
+              )}
+            >
+              <input
+                type="file"
+                hidden
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleLogoUpload(file);
+                }}
+              />
+
+              {logoPreview ? (
+                <div className="flex flex-col items-center animate-in zoom-in-95 duration-200 relative z-10">
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="h-32 w-32 object-contain rounded-2xl mb-4 shadow-sm bg-background border border-border/50"
+                  />
+                  <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                    Loqonu dəyişmək üçün klikləyin
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center relative z-10">
+                  <div className="h-16 w-16 bg-background rounded-2xl flex items-center justify-center mb-4 transition-transform duration-200 shadow-sm border border-border/40 group-hover:-translate-y-1">
+                    <Upload className="h-6 w-6 text-muted-foreground group-hover:text-foreground transition-colors duration-200" />
+                  </div>
+                  <h3 className="text-base text-foreground font-semibold mb-1">
+                    Logo yükləyin
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    və ya faylı bura sürükləyin
+                  </p>
+                  <span className="text-[11px] font-medium text-muted-foreground/60">
+                    PNG, JPG, WEBP • Max 5MB
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {logoUploadError && (
+              <div className="text-red-500 text-sm bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center justify-center gap-2">
+                <Sparkles className="h-4 w-4" /> {logoUploadError}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setCurrentStep(2)}
+                className="flex-none w-14 bg-secondary text-foreground py-3.5 rounded-xl font-medium hover:bg-secondary/80 transition-all text-sm flex justify-center items-center"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setCurrentStep(4)}
+                className="flex-[1.5] text-muted-foreground py-3.5 rounded-xl font-medium hover:bg-secondary hover:text-foreground transition-all text-sm"
+              >
+                Sonraya saxla
+              </button>
+              <button
+                onClick={saveLogo}
+                disabled={isSaving}
+                className="flex-[2] justify-center rounded-xl px-4 py-3.5 text-sm font-semibold transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed flex items-center gap-2"
+                style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>Növbəti <ArrowRight className="h-4 w-4" /></>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Ready */}
+        {currentStep === 4 && (
+          <div className="space-y-6 text-center py-2 animate-in fade-in slide-in-from-right-8 duration-500">
+            <div className="flex justify-center mb-4">
+              <div className="h-20 w-20 bg-green-500/10 rounded-full flex items-center justify-center animate-in zoom-in-75 duration-300">
+                <Check className="h-8 w-8 text-green-600 stroke-[2.5]" />
+              </div>
+            </div>
+
+            <div className="text-left">
+              <div className="rounded-2xl bg-amber-50/50 border border-amber-100/50 p-4">
+                <h4 className="font-semibold text-amber-800 text-[13px] flex items-center gap-1.5 mb-1">
+                  <span className="text-base">⏳</span> Profiliniz nəzərdən keçirilir
+                </h4>
+                <p className="text-[13px] text-amber-800/80 leading-relaxed pl-6">
+                  Adətən 24 saat ərzində baxılır. Bu müddətdə dashboard-da məhsul əlavə edə,
+                  profili tamamlaya bilərsiniz.
+                </p>
+              </div>
+            </div>
+
+            {finishError && (
+              <div className="text-red-500 text-sm bg-red-50 p-4 rounded-xl border border-red-100/50 flex items-center justify-center">
+                {finishError}
+              </div>
+            )}
+
+            <button
+              onClick={finishOnboarding}
+              disabled={isSaving}
+              className="flex w-full justify-center rounded-xl px-4 py-3.5 text-sm font-semibold transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-75 disabled:cursor-not-allowed items-center gap-2 mt-4"
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            >
+              {isSaving ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>Dashboarda keç <ArrowRight className="h-4 w-4" /></>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+==================================================
+FILE: src/app/[locale]/(onboarding)/actions.ts
+==================================================
+
+"use server";
+import { withTranslation, getTranslation } from "@/lib/prisma-locale";
+
+
+import { prisma } from "@/lib/db";
+import { auth, unstable_update } from "@/lib/auth";
+
+export async function getOnboardingDataAction(locale: string = "az") {
+  const session = await auth();
+  const user = session?.user;
+  if (!user) return null;
+
+  const categories = await prisma.category.findMany({
+    orderBy: { name: 'asc' }
+  });
+
+  const company = await prisma.company.findFirst({
+    where: { owner_id: user.id },
+    include: {
+      translations: withTranslation(locale)
+    }
+  });
+
+  return { categories, company };
+}
+
+export async function updateOnboardingStep1Action(
+  companyId: string, 
+  categoryId: string, 
+  website: string, 
+  name: string, 
+  description: string, 
+  phone: string, 
+  address: string, 
+  taxId: string,
+  email: string,
+  foundingYear: string
+) {
+  const session = await auth();
+  const user = session?.user;
+  if (!user) throw new Error("Unauthorized");
+
+  // Verify ownership
+  const company = await prisma.company.findFirst({ where: { id: companyId, owner_id: user.id } });
+  if (!company) throw new Error("Company not found or unauthorized");
+
+  await prisma.company.update({
+    where: { id: companyId },
+    data: { 
+      category_id: categoryId, 
+      website, 
+      phone: phone || null, 
+      tax_id: taxId || null,
+      email: email || null,
+      founding_year: foundingYear ? parseInt(foundingYear, 10) : null
+    }
+  });
+
+  // Update translation
+  const existingTranslation = await prisma.companyTranslation.findFirst({
+    where: { company_id: companyId, locale: "az" }
+  });
+
+  if (existingTranslation) {
+    await prisma.companyTranslation.update({
+      where: { id: existingTranslation.id },
+      data: { name, description, address: address || null }
+    });
+  } else {
+    await prisma.companyTranslation.create({
+      data: {
+        company_id: companyId,
+        locale: "az",
+        name,
+        description,
+        address: address || null
+      }
+    });
+  }
+
+  return { success: true };
+}
+
+export async function updateCompanyLogoAction(companyId: string, logoUrl: string) {
+  const session = await auth();
+  const user = session?.user;
+  if (!user) throw new Error("Unauthorized");
+
+  const company = await prisma.company.findFirst({ where: { id: companyId, owner_id: user.id } });
+  if (!company) throw new Error("Company not found or unauthorized");
+
+  await prisma.company.update({
+    where: { id: companyId },
+    data: { logo_url: logoUrl }
+  });
+
+  return { success: true };
+}
+
+export async function finishOnboardingAction(companyId: string) {
+  const session = await auth();
+  const user = session?.user;
+  if (!user) throw new Error("Unauthorized");
+
+  const company = await prisma.company.findFirst({ where: { id: companyId, owner_id: user.id } });
+  if (!company) throw new Error("Company not found or unauthorized");
+
+  await prisma.company.update({
+    where: { id: companyId },
+    data: {
+      onboarding_completed: true,
+      status: "pending_review",
+      submitted_at: new Date()
+    }
+  });
+
+  await unstable_update({
+    user: { onboarding_completed: true } as any
+  });
+
+  return { success: true };
+}
+
+
+

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import bcryptjs from "bcryptjs";
+import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -14,8 +15,15 @@ export async function POST(req: Request) {
     }
 
     // Check if user exists
-    const existingUser = await prisma.profile.findUnique({
-      where: { email },
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await prisma.profile.findFirst({
+      where: {
+        email: {
+          equals: normalizedEmail,
+          mode: "insensitive"
+        }
+      },
     });
 
     if (existingUser) {
@@ -31,23 +39,33 @@ export async function POST(req: Request) {
     // Create user in profiles table
     // NextAuth standard uses uuid, let's generate one or let prisma do it if it's default
     // We will generate a UUID manually since it's required by our schema
-    const crypto = require("crypto");
-    const userId = crypto.randomUUID();
+    const userId = randomUUID();
 
     const user = await prisma.profile.create({
       data: {
         id: userId,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         name: companyName, // store company name as user name for simplicity
         role: "company",
       },
     });
 
-    // We don't create company here anymore, the frontend will call the createCompanyAfterRegisterAction
-    // However, wait, the action might expect the user to be logged in. 
-    // Wait, the client-side sign up happens via fetch, then it needs to login to get session.
-    // We should return success, and the frontend will do signIn('credentials').
+    const company = await prisma.company.create({
+      data: {
+        slug: companySlug,
+        owner_id: user.id,
+        status: "draft",
+      },
+    });
+
+    await prisma.companyTranslation.create({
+      data: {
+        company_id: company.id,
+        locale: "az",
+        name: companyName,
+      },
+    });
 
     return NextResponse.json({ success: true, user: { id: user.id, email: user.email } }, { status: 201 });
   } catch (error: any) {

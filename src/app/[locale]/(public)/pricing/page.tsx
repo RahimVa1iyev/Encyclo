@@ -7,7 +7,7 @@ export const metadata = {
   title: "Tariflər — Encyclo",
   description: "Encyclo platformasının tarif planları. Starter $49/ay, Growth $199/ay, Scale $599/ay.",
   alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/pricing`,
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/pricing`,
   },
   openGraph: {
     title: "Tariflər — Encyclo",
@@ -72,11 +72,11 @@ export default async function PricingPage() {
     "@type": "WebPage",
     "name": "Tariflər — Encyclo",
     "description": "Encyclo platformasının tarif planları.",
-    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encyclo-phi.vercel.app'}/pricing`,
+    "url": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://encycloai.com'}/pricing`,
     "publisher": {
       "@type": "Organization",
       "name": "Encyclo",
-      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encyclo-phi.vercel.app"
+      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://encycloai.com"
     }
   }
 
